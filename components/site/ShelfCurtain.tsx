@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Seal } from '@/components/brand/Seal'
 import { markRevealed } from '@/lib/reveal'
+import { site } from '@/lib/site'
 
 /**
  * The opening shelf.
@@ -192,6 +193,7 @@ export function ShelfCurtain() {
     let live = true
     let frame = 0
     let timer = 0
+    let unmount = 0
 
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
@@ -208,7 +210,14 @@ export function ShelfCurtain() {
          meant to be counted from their seeing it starts at this moment rather
          than at its own mount. See lib/reveal.ts. */
       markRevealed()
-      setDone(true)
+      /* The veil is a hundred and thirty odd elements, and unmounting it is
+         the most expensive thing this component ever does. Done in the frame
+         the shelf finishes on, that work lands in the first frame the visitor
+         is actually looking at the page, which is the worst possible moment
+         for it. The CSS has already taken the veil to visibility: hidden by
+         then, so there is nothing to see for the extra beat, and React tears
+         it down once the reveal is over. */
+      unmount = window.setTimeout(() => setDone(true), 400)
     }
 
     /* Where a reload lands.
@@ -246,6 +255,7 @@ export function ShelfCurtain() {
       live = false
       window.cancelAnimationFrame(frame)
       window.clearTimeout(timer)
+      window.clearTimeout(unmount)
       document.body.style.overflow = previousOverflow
     }
   }, [])
@@ -262,15 +272,21 @@ export function ShelfCurtain() {
       </div>
 
       <div className="shelf-mark">
-        {/* The mark, at the one size on the site where its wordmark is
-            genuinely legible, and with nothing set beneath it: the artwork
-            carries the name itself here.
+        {/* The mark, then the house name set beneath it in the display
+            serif, then the gold hairline that fills as the shelf waits.
+
+            The mark was taken up to 272px for a while so that the wordmark
+            inside the disc could be read on its own, and at that size it
+            stopped being a stamp on a shelf and started being a poster. It is
+            back to the size it was, with the name set under it in real
+            letters, which is the thing that was legible all along.
 
             The intrinsic width matches the top of the clamp in .shelf-mark
             img, so next/image serves that width and its retina double and
             nothing is ever upscaled. priority because this is the first thing
             on screen and must not wait on lazy loading. */}
-        <Seal size={272} priority />
+        <Seal size={176} priority />
+        <span className="shelf-wordmark marker">{site.name}</span>
         <span className="shelf-progress" />
       </div>
     </div>

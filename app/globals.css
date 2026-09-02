@@ -152,6 +152,23 @@
   html {
     -webkit-text-size-adjust: 100%;
     scroll-behavior: smooth;
+    /*
+     * The scrollbar's track is reserved whether or not a scrollbar is in it.
+     *
+     * Five things on this site lock the page by putting overflow: hidden on
+     * the body - the opening shelf, the mobile nav panel, the lead modal, the
+     * exit prompt and the mobile sheet - and on a desktop browser with a
+     * classic scrollbar that takes the bar away, hands the page back the 15px
+     * it occupied, and every centred thing on it slides sideways. Coming out
+     * of the lock slides it all back.
+     *
+     * The shelf made that unmissable, because it locks from the first paint
+     * and releases at the exact moment the halves finish opening: the site
+     * appeared to twitch as it was revealed. Reserving the gutter here means
+     * the page is the same width locked or not, so none of the five shifts
+     * anything, and no JavaScript has to measure a scrollbar to compensate.
+     */
+    scrollbar-gutter: stable;
   }
 
   /* The masthead is sticky, so an anchor jump would otherwise land with the
@@ -1451,12 +1468,24 @@
      a full screen of shelf, so it is sized to be read: a little under a fifth
      of the window, and never smaller than 7rem on a phone. */
   .shelf-mark img {
-    /* Larger than a seal is set anywhere else, because this one carries the
-       wordmark and the wordmark is what decides the floor: below about 11rem
-       the name stops being letters. Nothing else is on the screen to crowd. */
-    width: clamp(11.5rem, 26vw, 17rem);
+    /* The seal is an <img>, not the drawn svg this rule was first written
+       for. It is the only thing on a full screen of shelf, so it is sized to
+       be seen: a little under a fifth of the window, and never smaller than
+       7rem on a phone. */
+    width: clamp(7rem, 18vw, 11rem);
     height: auto;
     filter: drop-shadow(0 14px 34px rgba(0, 0, 0, 0.6));
+  }
+
+  .shelf-wordmark {
+    /* Set against the mark above it, so it grows with the window by the same
+       proportion rather than staying at one size under a seal that moves. */
+    font-size: clamp(0.875rem, 1.5vw, 1.0625rem);
+    letter-spacing: 0.24em;
+    color: var(--color-gold-light);
+    /* The trailing letterspace, put back on the left so the word sits centred
+       rather than a quarter of an em right of it. */
+    text-indent: 0.24em;
   }
 
 

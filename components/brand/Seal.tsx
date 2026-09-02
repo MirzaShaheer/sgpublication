@@ -20,9 +20,10 @@ import logoMark from '@/public/logo-mark.png'
  * name instead of printing it illegibly. See the README for how it was made;
  * regenerate both together if the artwork is ever replaced.
  *
- * This is the only place in the site where the seal appears. The favicon
- * (app/icon.svg) is drawn by hand instead, because at 16 device pixels the
- * photographic mark collapses into a brown blur.
+ * This is the only place in the page where the seal appears. The favicons and
+ * the Apple touch icon are the same artwork, resized ahead of time by the
+ * script recorded in the README rather than served through here, because an
+ * icon renders outside the document.
  */
 
 type SealProps = {

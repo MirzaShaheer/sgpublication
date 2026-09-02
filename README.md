@@ -59,7 +59,7 @@ These were judgement calls made rather than blocking on a question. Each is easy
 
    **Why two files.** The artwork carries the wordmark curving across the foot of the disc. It reads at 200px and is a grey smear at 38px, so `public/logo-mark.png` is the same artwork with that band repainted out of the field, and `Seal` picks between the two at 128px. The band was not cropped away: the S and the G run out close to the rim, so any crop tight enough to lose the name also clips the monogram. Instead the rows the name occupied were repainted by interpolating the field from clean rows above and below, averaged across a 29px window so the field's grain did not smear into vertical streaks, with a little noise added back to match its tooth. If the artwork is ever replaced, regenerate both files together.
 
-   **The favicon is still drawn.** `app/icon.svg` keeps the hand drawn disc and monogram, because at 16 device pixels the artwork's bevels and drop shadow collapse into a brown blur while the drawn version still reads as an S and a G. To use the artwork there anyway, delete that file and add `app/icon.png`; look at it at 16px first.
+   **The favicons are the artwork, cropped and sharpened.** A straight downscale of the seal to 16px is a brown blur: the mark leaves padding inside the rim, so most of those sixteen pixels are field. `app/icon.png` (48), `icon1.png` (32) and `icon2.png` (16) are therefore cut from `logo-mark.png` at `extract({ left: 50, top: 10, width: 980, height: 980 })`, which crops to just inside the rim without clipping the S or the G, then resized with lanczos3 and sharpened at sigma 0.6. Three sizes rather than one, so the browser is handed a tuned 16px instead of downscaling a 48px itself. Regenerate all three the same way if the artwork changes.
 
    **The wordmark says "Selune Global Publication", the site says "SG Publication".** Both are right: Selune Global is the parent company and this is its book publishing division, with SG short for the parent. The site therefore says SG Publication throughout, the seal carries the full name at the sizes where it is legible, the hero closes on an imprint line naming the parent, and the `Organization` structured data carries it as `parentOrganization`. The name is set once, as `site.parent` in `lib/site.ts`.
 
@@ -203,7 +203,7 @@ There is a light in memory rate limit per IP. It is per instance only; a deploym
 
   | Route | Size | Used for |
   | --- | --- | --- |
-  | `app/icon.svg` | 32 (scales) | The favicon. The seal reduced to the disc and the monogram, drawn as paths: at 16px the artwork itself is a blur, and a favicon renders outside the document, so it can reach neither the site fonts nor the CSS tokens. |
+  | `app/icon.png`, `icon1`, `icon2` | 48, 32, 16 | The favicon, at three sizes so the browser picks one rather than downscaling a large one itself. |
   | `app/apple-icon.png` | 180x180 | iOS home screen. The artwork, wordmark removed. |
   | `app/opengraph-image.tsx` | 1200x630 | `og:image`. |
   | `app/twitter-image.tsx` | 1200x630 | `twitter:image`, re-exported from the Open Graph route so there is one card to maintain. |

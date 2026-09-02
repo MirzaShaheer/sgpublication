@@ -55,7 +55,7 @@ export const metadata: Metadata = {
   alternates: { canonical: absoluteUrl('/') },
   // Icons and card images all come from file conventions, so there is no
   // hardcoded path here to drift out of date:
-  //   app/icon.svg             the favicon, the seal redrawn for 16px
+  //   app/icon.png             the favicon at 48, with icon1 32 and icon2 16
   //   app/apple-icon.png       180x180, the artwork itself
   //   app/opengraph-image.tsx  1200x630
   //   app/twitter-image.tsx    the same card, re-exported

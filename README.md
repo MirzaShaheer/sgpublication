@@ -49,6 +49,16 @@ The Dockerfile is a three stage build against Next's `standalone` output, so the
 
 **Nixpacks note.** Nixpacks also builds this project without changes, since `npm run build` and `npm start` are both standard. The Dockerfile is preferred because it produces a much smaller runtime image and pins the Node and OpenSSL versions Prisma needs.
 
+## Deploying to Vercel
+
+Also supported, and nothing needs configuring: **Root Directory** is the repository root, the build command is the default `npm run build`, and the framework preset is Next.js. `Dockerfile` and `railway.json` are ignored there.
+
+The one thing that differs is `output`. `next.config.ts` asks for `standalone`, which is what the Dockerfile needs and what Vercel does not want, so the option is dropped when `VERCEL` is set in the build environment. Both paths are verified: a plain `next build` emits `.next/standalone`, and `VERCEL=1 next build` does not.
+
+No environment variable is needed to build. `DATABASE_URL` is read only at request time by `/api/lead`, so a deployment without it serves every page and fails only on a form submission. Set `NEXT_PUBLIC_SITE_URL` to the live origin, or canonical URLs and the sitemap will point at the default in `lib/site.ts`.
+
+**If the domain returns Vercel's `404: NOT_FOUND`,** the deployment is missing rather than broken, and it is worth checking in this order: that the Deployments tab shows a build for the latest commit on `main` at all; that the project's Production Branch is `main` and not `master`, since pushes to a non production branch only ever build previews; that Root Directory is the repository root and not `app`; and that the domain is attached to this project rather than an older one.
+
 ---
 
 ## Assumptions made during the build

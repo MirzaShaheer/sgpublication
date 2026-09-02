@@ -1,0 +1,52 @@
+// SG Publication - lead capture.
+// The site runs fine with no DATABASE_URL set: lib/db.ts returns null and the
+// API route logs the payload instead of writing. See README.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum LeadSource {
+  modal
+  exit
+  inline
+  contact
+}
+
+enum AuthorStage {
+  idea
+  writing
+  manuscript_finished
+  published_not_selling
+  unknown
+}
+
+model Lead {
+  id        String      @id @default(cuid())
+  createdAt DateTime    @default(now())
+
+  name      String?
+  email     String
+  phone     String?
+  country   String?
+
+  stage     AuthorStage @default(unknown)
+  genre     String?
+  wordCount Int?
+  budget    String?
+  message   String?
+
+  source    LeadSource
+  // Where the visitor was when they submitted.
+  path      String?
+  referrer  String?
+  userAgent String?
+
+  @@index([createdAt])
+  @@index([email])
+}

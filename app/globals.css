@@ -1,0 +1,1643 @@
+@import 'tailwindcss';
+
+/* ============================================================================
+   SG PUBLICATION - DESIGN TOKENS
+   ----------------------------------------------------------------------------
+   The two colours that carry the brand come straight off the seal, which is
+   gold on brown and nothing else: an interlocked serif SG monogram, a quill
+   standing in an inkpot, and an open book. Teal and olive are secondary
+   accents specified in the brief rather than sampled from the mark, which is
+   why they are rationed to links and success states and never carry a whole
+   surface.
+
+   Two derived tokens (--gold-ink, --olive-ink) exist because brand gold and
+   olive do not reach AA as text on paper:
+     gold      #C9973F on paper -> 2.2:1  (fails; edge and rule use only)
+     olive     #7E8F52 on paper -> 3.2:1  (fails; icon and rule use only)
+     gold-ink  #8A5F1E on paper -> 5.1:1  (passes AA)
+     olive-ink #55632F on paper -> 5.9:1  (passes AA)
+   Brand gold is used as ink only on the dark bark field, where it reaches
+   5.5:1. This keeps the seal palette intact while passing AA everywhere.
+   ========================================================================= */
+
+@theme {
+  /* ---- colour ---------------------------------------------------------- */
+  --color-ink: #241812; /* deepest brown, primary text */
+  --color-ink-soft: #4a382e; /* secondary text on paper, 8.0:1 */
+  --color-bark: #3e2a20; /* logo field brown, dark sections */
+  --color-bark-deep: #2c1d15; /* footer, deepest band */
+  --color-gold: #c9973f; /* primary accent: rules, edges, foil */
+  --color-gold-ink: #8a5f1e; /* gold as TEXT on paper (AA safe) */
+  --color-gold-light: #e5be72; /* seal gradients, foil on dark */
+  --color-teal: #1f4e5a; /* secondary accent, links, 8.3:1 on paper */
+  --color-teal-light: #6fa3ae; /* teal on the dark field only */
+  --color-olive: #7e8f52; /* secondary accent, success marks */
+  --color-olive-ink: #55632f; /* olive as TEXT on paper (AA safe) */
+  --color-paper: #f7f2e9; /* warm uncoated stock, page ground */
+  --color-paper-2: #efe6d6; /* alternating band */
+  --color-paper-3: #e4d8c2; /* hairline dividers on paper */
+
+  /* ---- type ------------------------------------------------------------ */
+  --font-display: var(--font-newsreader), 'Iowan Old Style', 'Palatino Linotype',
+    Palatino, Georgia, 'Times New Roman', serif;
+  --font-sans: var(--font-karla), ui-sans-serif, system-ui, -apple-system,
+    'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+  /* Display scale. Tight leading, large sizes, negative tracking. */
+  --text-hero: clamp(2.625rem, 6.4vw, 4.5rem);
+  --text-hero--line-height: 1.05;
+  --text-hero--letter-spacing: -0.021em;
+  --text-h2: clamp(1.9375rem, 3.8vw, 2.875rem);
+  --text-h2--line-height: 1.1;
+  --text-h2--letter-spacing: -0.016em;
+  --text-h3: clamp(1.375rem, 2.2vw, 1.6875rem);
+  --text-h3--line-height: 1.2;
+  --text-h3--letter-spacing: -0.011em;
+  --text-h4: 1.1875rem;
+  --text-h4--line-height: 1.3;
+  --text-quote: clamp(1.375rem, 2.6vw, 1.9375rem);
+  --text-quote--line-height: 1.28;
+  --text-quote--letter-spacing: -0.012em;
+
+  /* Body scale. 17px mobile, 18px from the medium breakpoint up. */
+  --text-body: 1.0625rem;
+  --text-body--line-height: 1.65;
+  --text-lead: 1.1875rem;
+  --text-lead--line-height: 1.6;
+  --text-small: 0.9375rem;
+  --text-small--line-height: 1.55;
+  --text-fine: 0.8125rem;
+  --text-fine--line-height: 1.5;
+
+  /* ---- measure --------------------------------------------------------- */
+  --container-measure: 34rem; /* ~62 characters at body size */
+  --container-measure-wide: 39rem; /* ~72 characters, the hard cap */
+  --container-page: 75rem;
+
+  /* ---- radius ---------------------------------------------------------- */
+  /*
+   * Four steps, and every rounded corner on the site comes from one of them.
+   * The scale is deliberately shallow: this is still a paper object, so the
+   * corners are eased rather than bubbled, and the radius grows with the
+   * surface so a 40px button and a 700px modal read as the same hand.
+   *
+   * To take the whole site squarer or rounder, change these four numbers.
+   * Nothing hardcodes a radius anywhere else.
+   */
+  --radius-control: 0.625rem; /* buttons, fields, chips, badges */
+  --radius-panel: 0.875rem; /* cards, the nav panel, ruled blocks */
+  --radius-plate: 1.125rem; /* modals, plates, the largest surfaces */
+  --radius-pill: 999px; /* the theme switch, and anything capsule */
+
+  /* ---- motion ---------------------------------------------------------- */
+  /* One easing curve for the whole site. Books do not bounce. */
+  --ease-page: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* ---- elevation ------------------------------------------------------- */
+  /*
+   * A shadow here is a light source, not a drop offset. The panels used to
+   * stack a hard 8px offset block underneath them, which is a poster device
+   * and fights an eased corner; these are one soft cast, tuned so a surface
+   * lifts off the stock without looking like it is floating in space.
+   */
+  --shadow-lift: 0 1px 2px -1px rgba(36, 24, 18, 0.14), 0 6px 16px -10px rgba(36, 24, 18, 0.24);
+  --shadow-panel: 0 2px 6px -3px rgba(36, 24, 18, 0.16), 0 18px 44px -24px rgba(36, 24, 18, 0.42);
+  --shadow-modal: 0 4px 10px -4px rgba(36, 24, 18, 0.2), 0 40px 80px -40px rgba(36, 24, 18, 0.55);
+}
+
+/* ============================================================================
+   BASE
+   ========================================================================= */
+
+@layer base {
+  :root {
+    color-scheme: light;
+    /* Uncoated stock. One inline turbulence tile: no network request, and no
+       fixed attachment, since fixed backgrounds repaint on scroll on mobile. */
+    --paper-fibre: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23f)' opacity='0.5'/%3E%3C/svg%3E");
+  }
+
+  /**
+   * Dark mode.
+   *
+   * Not an inversion. The site is already a brown and gold object, so dark
+   * mode is the same object printed on a darker stock: the light band becomes
+   * the deep bark, the bark band steps deeper still so the alternation
+   * survives, and the inks lift. Gold is untouched, because gold is the one
+   * thing that reads on both.
+   *
+   * Driven by data-theme on <html>, written before first paint by the inline
+   * script in app/layout.tsx, so there is no flash of the light theme. The
+   * "system" setting resolves to light or dark in that script rather than
+   * here, which keeps one source of truth for what is currently showing.
+   */
+  :root[data-theme='dark'] {
+    color-scheme: dark;
+
+    --color-ink: #f2e9da;
+    --color-ink-soft: #bfb0a0;
+    /* The light band becomes the deep stock; the bark band goes deeper. */
+    --color-paper-2: #2a1c14;
+    --color-paper-3: #3b2921;
+    --color-bark: #1d130e;
+    --color-bark-deep: #150d09;
+    /* Ink values that only had to clear a light ground now have to clear a
+       dark one, so they lift to the light end of the same hues. */
+    --color-gold-ink: #e5be72;
+    --color-olive-ink: #a8be7a;
+    --color-teal: #8fbcc7;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  /* The masthead is sticky, so an anchor jump would otherwise land with the
+     section heading hidden underneath it. Every section that can be linked to
+     reserves the bar's height plus a little air above its own top edge. */
+  section[id],
+  [id][data-anchor] {
+    scroll-margin-top: 5.5rem;
+  }
+
+  /* The page ground is the warm stock, not the near white above it.
+     --color-paper (#F7F2E9) is kept as the LIGHT INK used on the bark field
+     (text-paper) and is deliberately no longer painted as a background: at
+     that value it reads as white on a screen, which is the one thing this
+     palette is not. Every light band on the site is paper-2. */
+  body {
+    background-color: var(--color-paper-2);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: 1.65;
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  @media (min-width: 48rem) {
+    body {
+      font-size: 1.125rem;
+    }
+  }
+
+  /* The fibre sits above the ground and below everything else. */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image: var(--paper-fibre);
+    opacity: 0.035;
+    mix-blend-mode: multiply;
+  }
+
+  /* Multiplying a grey tile into a dark ground just makes mud, so on the dark
+     stock the same tile is screened in at a much lower strength. */
+  :root[data-theme='dark'] body::before {
+    opacity: 0.022;
+    mix-blend-mode: screen;
+  }
+
+  body > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Tailwind v4's preflight deliberately drops cursor: pointer from buttons.
+     That is defensible for an app; on a marketing site it means a visitor
+     sweeping the page gets no signal that a control is a control until they
+     click it. Put back, for anything actually pressable. */
+  button:not(:disabled):not([aria-disabled='true']),
+  [role='button']:not([aria-disabled='true']),
+  summary,
+  label:has(input[type='checkbox'], input[type='radio']) {
+    cursor: pointer;
+  }
+
+  /* ---- focus ----------------------------------------------------------- */
+  /* Gold at brand strength is 2.2:1 on paper, below the 3:1 floor for a focus
+     indicator, so the ring on paper is gold-ink. On the bark field the ring
+     lifts to gold-light (7.7:1). */
+  /* No border-radius is set here on purpose. An outline follows the corner of
+     the element it is drawn on, so the ring rounds itself around a button, a
+     field or a plate without this rule having to know which it is. The old
+     1px here overrode the radius of every control it landed on. */
+  :focus-visible {
+    outline: 2px solid var(--color-gold-ink);
+    outline-offset: 3px;
+  }
+
+  :is(.on-dark, main > section:nth-of-type(odd)) :focus-visible,
+  :is(.on-dark, main > section:nth-of-type(odd)):focus-visible {
+    outline-color: var(--color-gold-light);
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--color-gold) 34%, transparent);
+    color: var(--color-ink);
+  }
+
+  ::placeholder {
+    color: color-mix(in srgb, var(--color-ink) 52%, transparent);
+    opacity: 1;
+  }
+
+  /* Native dropdown lists paint themselves white unless the option carries a
+     ground of its own. Styling the option is honoured by Chrome and Firefox on
+     Windows and Linux; Safari and iOS use the system list regardless, which is
+     the one surface on the site we do not control. */
+  option {
+    background-color: var(--color-paper-2);
+    color: var(--color-ink);
+  }
+
+  /* Chrome paints an autofilled field near white and ignores background-color.
+     A long inset shadow in the field colour is the only way to override it. */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  select:-webkit-autofill {
+    -webkit-text-fill-color: var(--color-ink);
+    box-shadow: inset 0 0 0 100px var(--color-paper-3);
+    caret-color: var(--color-ink);
+  }
+
+  /* Two motion moments exist on this site. Both are removed here. */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* ============================================================================
+   COMPONENT PRIMITIVES
+   Three rule weights, each with one job. A book separates matter with rules,
+   not with boxes, so there is no shared "card" primitive on this site.
+   ========================================================================= */
+
+@layer components {
+  /* The third type role: letterspaced small caps serif. Package tier names,
+     journey stage markers, footer column heads. Never an eyebrow above every
+     heading. */
+  .marker {
+    font-family: var(--font-display);
+    font-size: 0.8125rem;
+    font-variant-caps: all-small-caps;
+    font-feature-settings: 'c2sc' 1, 'smcp' 1;
+    letter-spacing: 0.13em;
+    line-height: 1;
+  }
+
+  /* Browsers without synthesised small caps fall back to real uppercase at a
+     smaller size, which reads the same way. */
+  @supports not (font-variant-caps: all-small-caps) {
+    .marker {
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+    }
+  }
+
+  /* Rule 1. Section rule pair, the way a book rules above a running head. */
+  .rule-pair {
+    border: 0;
+    height: 3px;
+    background:
+      linear-gradient(var(--color-gold), var(--color-gold)) top / 100% 1px
+        no-repeat,
+      linear-gradient(var(--color-paper-3), var(--color-paper-3)) bottom / 100%
+        1px no-repeat;
+  }
+
+  :is(.on-dark, main > section:nth-of-type(odd)) .rule-pair {
+    background:
+      linear-gradient(var(--color-gold), var(--color-gold)) top / 100% 1px
+        no-repeat,
+      linear-gradient(
+          color-mix(in srgb, var(--color-gold) 26%, transparent),
+          color-mix(in srgb, var(--color-gold) 26%, transparent)
+        )
+        bottom / 100% 1px no-repeat;
+  }
+
+  /* Rule 2. Gold hairline, for emphasis and for the promoted package. */
+  .rule-gold {
+    border: 0;
+    height: 1px;
+    background: var(--color-gold);
+  }
+
+  /* Rule 3. Quiet divider inside lists. */
+  .rule-quiet {
+    border: 0;
+    height: 1px;
+    background: var(--color-paper-3);
+  }
+
+  :is(.on-dark, main > section:nth-of-type(odd)) .rule-quiet {
+    background: color-mix(in srgb, var(--color-gold) 22%, transparent);
+  }
+
+  /* Measure caps. Body copy never exceeds 72 characters. */
+  .measure {
+    max-width: var(--container-measure);
+  }
+
+  .measure-wide {
+    max-width: var(--container-measure-wide);
+  }
+
+  /* Links inside running copy: teal, with a gold underline on hover. */
+  .link {
+    color: var(--color-teal);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.18em;
+    text-decoration-color: color-mix(
+      in srgb,
+      var(--color-teal) 38%,
+      transparent
+    );
+    transition: text-decoration-color 160ms var(--ease-page);
+  }
+
+  .link:hover {
+    text-decoration-color: var(--color-gold-ink);
+  }
+
+  :is(.on-dark, main > section:nth-of-type(odd)) .link {
+    color: var(--color-gold-light);
+    text-decoration-color: color-mix(
+      in srgb,
+      var(--color-gold-light) 40%,
+      transparent
+    );
+  }
+
+  :is(.on-dark, main > section:nth-of-type(odd)) .link:hover {
+    text-decoration-color: var(--color-gold-light);
+  }
+
+  /* Dark field. Gold sits on it the way foil sits on a hardback case. */
+  /**
+   * The bark field.
+   *
+   * This does more than set a background: it re-points the ink tokens for
+   * everything inside it. Tailwind v4 utilities compile to `var(--color-x)`,
+   * so redefining those variables here means `text-ink-soft`, `bg-paper-3`,
+   * `text-gold-ink` and the rest keep meaning "the secondary ink", "the field
+   * fill", "the marker colour" rather than a fixed brown.
+   *
+   * That is what lets any section sit on either ground. Before this, a section
+   * written for paper went unreadable the moment it was set to dark, and every
+   * band had to be authored for the ground it happened to land on.
+   *
+   * --color-paper is deliberately NOT redefined: on this field it is the light
+   * ink, and `text-paper` has to keep meaning that.
+   */
+  .on-dark {
+    --color-ink: var(--color-paper);
+    --color-ink-soft: color-mix(in srgb, var(--color-paper) 76%, transparent);
+    /* Bands and fills step off the bark rather than off the stock. */
+    --color-paper-2: var(--color-bark);
+    --color-paper-3: color-mix(in srgb, var(--color-gold) 26%, transparent);
+    /* Gold and olive as ink: on bark the light values are the legible ones. */
+    --color-gold-ink: var(--color-gold-light);
+    --color-olive-ink: #a8be7a;
+    --color-teal: var(--color-teal-light);
+
+    background-color: var(--color-bark);
+    color: var(--color-paper);
+  }
+
+  /* ---- buttons --------------------------------------------------------- */
+  /* Gold is an edge here, never a fill: a solid gold button reads cheap, so
+     the primary action is the bark field with a gold hairline stamped inside
+     it, the way foil is stamped on a case. */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: var(--radius-control);
+    font-family: var(--font-sans);
+    letter-spacing: 0.01em;
+    text-align: center;
+    /* transform is in the list so the hover lift below eases with everything
+       else. It is a transform and not a margin, so a button rising under the
+       pointer never reflows the row it sits in. */
+    transition:
+      background-color 220ms var(--ease-page),
+      box-shadow 220ms var(--ease-page),
+      color 220ms var(--ease-page),
+      transform 220ms var(--ease-page);
+  }
+
+  /* The lift. One pixel, which is all a raised object needs to read as raised,
+     and it is put back the moment the button is pressed so the click has a
+     physical answer. .btn-quiet is excluded: it has no box to lift. */
+  .btn:not(.btn-quiet):hover {
+    transform: translateY(-1px);
+  }
+
+  .btn:not(.btn-quiet):active {
+    transform: translateY(0);
+    transition-duration: 90ms;
+  }
+
+  .btn:disabled,
+  .btn[aria-disabled='true'] {
+    opacity: 0.55;
+    pointer-events: none;
+  }
+
+  .btn-md {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.95rem;
+  }
+
+  .btn-lg {
+    padding: 0.875rem 1.75rem;
+    font-size: 1.0625rem;
+    /* The larger control carries the larger corner, so the curve stays in
+       proportion to the box rather than tightening as the button grows. */
+    border-radius: var(--radius-panel);
+  }
+
+  .btn-primary {
+    background-color: var(--color-bark);
+    color: var(--color-paper);
+    box-shadow:
+      inset 0 0 0 2px color-mix(in srgb, var(--color-gold) 70%, transparent),
+      var(--shadow-lift);
+  }
+
+  .btn-primary:hover {
+    background-color: var(--color-bark-deep);
+    box-shadow:
+      inset 0 0 0 2px var(--color-gold),
+      var(--shadow-panel);
+  }
+
+  /* On the bark field the roles reverse: the paper block is the foil. */
+  /*
+   * --color-paper and --color-bark, not --color-paper-2 and --color-ink.
+   *
+   * The pair this used to name are both redefined inside .on-dark: paper-2
+   * becomes the bark and ink becomes the light stock. So on the one ground
+   * this variant exists for, it resolved to a bark fill with light text, which
+   * is what every field and outline on that ground already looks like, and the
+   * submit button in the hero panel read as a sixth input rather than as the
+   * thing that does something. These two are deliberately not redefined by
+   * .on-dark or by the dark theme, so the block stays paper and the ink on it
+   * stays brown wherever it is dropped.
+   */
+  .btn-primary-on-dark {
+    background-color: var(--color-paper);
+    color: var(--color-bark);
+    box-shadow:
+      inset 0 0 0 2px transparent,
+      0 6px 18px -12px rgba(0, 0, 0, 0.7);
+  }
+
+  .btn-primary-on-dark:hover {
+    background-color: var(--color-gold-light);
+    box-shadow:
+      inset 0 0 0 2px var(--color-gold),
+      0 14px 30px -16px rgba(0, 0, 0, 0.8);
+  }
+
+  .btn-secondary {
+    background-color: transparent;
+    color: var(--color-ink);
+    box-shadow: inset 0 0 0 1px var(--color-paper-3);
+  }
+
+  /* An outline button has no fill to darken, so hover gives it the faintest
+     one: enough to answer the pointer, not enough to become a second primary. */
+  .btn-secondary:hover {
+    background-color: color-mix(in srgb, var(--color-gold) 8%, transparent);
+    box-shadow: inset 0 0 0 1px var(--color-gold);
+  }
+
+  :is(.on-dark, main > section:nth-of-type(odd)) .btn-secondary {
+    color: var(--color-paper);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-gold) 45%, transparent);
+  }
+
+  :is(.on-dark, main > section:nth-of-type(odd)) .btn-secondary:hover {
+    box-shadow: inset 0 0 0 1px var(--color-gold);
+  }
+
+  /* The quiet secondary action: a text link carrying a gold underline. */
+  .btn-quiet {
+    padding-inline: 0;
+    border-radius: 0;
+    font-size: 1.0625rem;
+    color: var(--color-ink);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.28em;
+    text-decoration-color: var(--color-gold);
+  }
+
+  .btn-quiet:hover {
+    color: var(--color-gold-ink);
+    text-decoration-thickness: 2px;
+  }
+
+  :is(.on-dark, main > section:nth-of-type(odd)) .btn-quiet {
+    color: var(--color-paper);
+    text-decoration-color: var(--color-gold);
+  }
+
+  :is(.on-dark, main > section:nth-of-type(odd)) .btn-quiet:hover {
+    color: var(--color-gold-light);
+  }
+
+  /* ---- form controls --------------------------------------------------- */
+  /*
+   * One control, defined once, the way .btn is.
+   *
+   * There used to be five: LeadFields, InlineLeadForm, QuoteForm, ContactForm
+   * and LeadForm each carried their own string, and they disagreed about the
+   * fill (paper, paper-3 or transparent), about whether the label was small
+   * caps or body, and about what focus did. Five near misses of the same
+   * control is most of why the forms read as cheap, because nothing on the
+   * page repeated exactly.
+   *
+   * The field is a well, not an underline: ruled on all four sides in the
+   * hairline stock, filled a shade off the ground it sits on so the edge is a
+   * real edge rather than a fill meeting the same fill. On the bark field
+   * --color-paper-3 resolves to a translucent gold, which is what made the
+   * old border-b invisible against a bg-paper-3 fill; here the two are
+   * declared separately so the ground can flip without the edge going with it.
+   */
+  .field {
+    display: block;
+    width: 100%;
+    /* The same corner the buttons take. A field and a button are the same
+       size of object, so they carry the same radius from the one scale. */
+    border-radius: var(--radius-control);
+    border: 1px solid var(--color-paper-3);
+    background-color: var(--color-paper);
+    padding: 0.7rem 0.85rem;
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    color: var(--color-ink);
+    transition:
+      border-color 200ms var(--ease-page),
+      box-shadow 200ms var(--ease-page),
+      background-color 200ms var(--ease-page);
+  }
+
+  .field::placeholder {
+    color: color-mix(in srgb, var(--color-ink) 42%, transparent);
+  }
+
+  /* The focused field is obvious across the room: the rule goes gold and a
+     second gold hairline is stamped inside it, which is the same move the
+     panels make. outline is removed only because box-shadow replaces it. */
+  .field:focus,
+  .field:focus-visible {
+    outline: none;
+    border-color: var(--color-gold);
+    box-shadow: inset 0 0 0 1px var(--color-gold);
+  }
+
+  .field[aria-invalid='true'] {
+    border-color: var(--color-gold-ink);
+  }
+
+  .field:disabled {
+    opacity: 0.55;
+  }
+
+  /* On bark the well is cut into the ground rather than lifted off it, so the
+     fill steps down and the edge is carried by gold at low strength. */
+  :is(.on-dark, main > section:nth-of-type(odd)) .field {
+    border-color: color-mix(in srgb, var(--color-gold) 30%, transparent);
+    background-color: color-mix(in srgb, #000 22%, transparent);
+    color: var(--color-paper);
+  }
+
+  :is(.on-dark, main > section:nth-of-type(odd)) .field::placeholder {
+    color: color-mix(in srgb, var(--color-paper) 42%, transparent);
+  }
+
+  :is(.on-dark, main > section:nth-of-type(odd)) .field:focus,
+  :is(.on-dark, main > section:nth-of-type(odd)) .field:focus-visible {
+    border-color: var(--color-gold);
+    background-color: color-mix(in srgb, #000 34%, transparent);
+  }
+
+  /*
+   * The composite control: a shell ruled once, holding two controls that share
+   * the edge. Used by the phone field, where the dialling code is a segment of
+   * the number rather than a separate question a paragraph away from it. The
+   * shell carries the border and the focus treatment; the controls inside it
+   * are stripped back to nothing so there is one box, not three.
+   */
+  .field-shell {
+    display: flex;
+    width: 100%;
+    align-items: stretch;
+    /* The shell owns the corner and clips to it, so the two controls sharing
+       it round on their outer edges and stay square where they meet the seam.
+       Without the clip the select inside would square off the left corners. */
+    border-radius: var(--radius-control);
+    overflow: hidden;
+    border: 1px solid var(--color-paper-3);
+    background-color: var(--color-paper);
+    transition:
+      border-color 200ms var(--ease-page),
+      box-shadow 200ms var(--ease-page),
+      background-color 200ms var(--ease-page);
+  }
+
+  .field-shell:focus-within {
+    border-color: var(--color-gold);
+    box-shadow: inset 0 0 0 1px var(--color-gold);
+  }
+
+  .field-shell[data-invalid='true'] {
+    border-color: var(--color-gold-ink);
+  }
+
+  :is(.on-dark, main > section:nth-of-type(odd)) .field-shell {
+    border-color: color-mix(in srgb, var(--color-gold) 30%, transparent);
+    background-color: color-mix(in srgb, #000 22%, transparent);
+  }
+
+  :is(.on-dark, main > section:nth-of-type(odd)) .field-shell:focus-within {
+    border-color: var(--color-gold);
+    background-color: color-mix(in srgb, #000 34%, transparent);
+  }
+
+  /* A control living inside a shell: no edge, no fill, no ring of its own. */
+  .field-bare {
+    border: 0;
+    background-color: transparent;
+    border-radius: 0; /* the shell rounds it */
+    padding: 0.7rem 0.85rem;
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    color: var(--color-ink);
+  }
+
+  .field-bare:focus,
+  .field-bare:focus-visible {
+    outline: none;
+    box-shadow: none;
+  }
+
+  .field-bare::placeholder {
+    color: color-mix(in srgb, var(--color-ink) 42%, transparent);
+  }
+
+  :is(.on-dark, main > section:nth-of-type(odd)) .field-bare {
+    color: var(--color-paper);
+  }
+
+  :is(.on-dark, main > section:nth-of-type(odd)) .field-bare::placeholder {
+    color: color-mix(in srgb, var(--color-paper) 42%, transparent);
+  }
+
+  /*
+   * The dialling code select. Its own text is painted out because the short
+   * form is drawn behind it; the options keep real colours because the popup
+   * is a platform surface and inherits from the element.
+   *
+   * The option colours are literals rather than tokens on purpose. Inside a
+   * .on-dark panel --color-ink is the light ink and --color-paper is the light
+   * stock, so a token pair here would render light on light. The popup is not
+   * on the bark field, it is on the desktop, so it follows the page theme and
+   * nothing else.
+   */
+  .field-dial {
+    color: transparent;
+    text-shadow: none;
+  }
+
+  .field-dial:focus-visible {
+    outline: none;
+  }
+
+  .field-dial option {
+    color: #241812;
+    background-color: #f7f2e9;
+  }
+
+  :root[data-theme='dark'] .field-dial option {
+    color: #f2e9da;
+    background-color: #2a1c14;
+  }
+
+  /* The seam between two controls sharing a shell. */
+  .field-seam {
+    width: 1px;
+    align-self: stretch;
+    background-color: var(--color-paper-3);
+  }
+
+  :is(.on-dark, main > section:nth-of-type(odd)) .field-seam {
+    background-color: color-mix(in srgb, var(--color-gold) 30%, transparent);
+  }
+
+  /* ---- icon buttons ---------------------------------------------------- */
+  /*
+   * The small round controls: the burger, the panel close, anything that is a
+   * mark in a 44px box. They had no ground at all, so the only feedback a
+   * pointer got was the icon changing colour, and on a touch target that size
+   * the hit area was invisible. A disc of the current ink at 8 percent gives
+   * the control an edge to land on and costs no colour of its own.
+   */
+  .icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-pill);
+    color: var(--color-ink-soft);
+    transition:
+      background-color 200ms var(--ease-page),
+      color 200ms var(--ease-page),
+      transform 200ms var(--ease-page);
+  }
+
+  .icon-btn:hover {
+    background-color: color-mix(in srgb, currentColor 9%, transparent);
+    color: var(--color-ink);
+  }
+
+  .icon-btn:active {
+    transform: scale(0.94);
+    transition-duration: 90ms;
+  }
+
+  /* ---- the theme switch ------------------------------------------------ */
+  /*
+   * Light and dark as a two position capsule: both destinations are on the
+   * track at once, and a gold knob slides between them. The single sun that
+   * became a moon said nothing about where you were, only that something
+   * would change; this shows the current state and the alternative side by
+   * side, which is why it needs no label to be read at a glance.
+   *
+   * Geometry, so the knob lands exactly on an icon: the track is 2 * --pad
+   * plus 2 * --knob wide, and the knob travels its own width. Change --knob
+   * or --pad and the sums below follow; nothing is a magic number.
+   */
+  .theme-switch {
+    --knob: 1.625rem;
+    --pad: 0.1875rem;
+
+    position: relative;
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    width: calc(2 * var(--knob) + 2 * var(--pad));
+    height: calc(var(--knob) + 2 * var(--pad));
+    padding: var(--pad);
+    border-radius: var(--radius-pill);
+    /* The track reads off currentColor, so it travels with the masthead as
+       the bar goes from paper ground to bark instead of being authored twice. */
+    background-color: color-mix(in srgb, currentColor 10%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 16%, transparent);
+    -webkit-tap-highlight-color: transparent;
+    transition:
+      background-color 420ms var(--ease-page),
+      box-shadow 220ms var(--ease-page);
+  }
+
+  /* The track is 32px high because that is what sits correctly in the
+     masthead row. A thumb needs 44px, so the hit area is grown past the paint
+     rather than the paint being grown to meet the thumb. */
+  .theme-switch::after {
+    content: '';
+    position: absolute;
+    inset: -6px;
+  }
+
+  .theme-switch:hover {
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-gold) 55%, transparent);
+  }
+
+  /* The knob. Polished gold, the one place outside the seal where a gold
+     gradient is allowed, because this is the only object on the page that has
+     to read as a physical switch. */
+  .theme-switch-knob {
+    position: absolute;
+    top: var(--pad);
+    left: var(--pad);
+    width: var(--knob);
+    height: var(--knob);
+    border-radius: var(--radius-pill);
+    background: linear-gradient(
+      145deg,
+      var(--color-gold-light) 0%,
+      var(--color-gold) 62%,
+      #b0812f 100%
+    );
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.34);
+    /* The travel is the knob's own width, so it comes to rest centred under
+       whichever icon it moved to. */
+    transition: transform 380ms var(--ease-page);
+  }
+
+  .theme-switch[data-state='dark'] .theme-switch-knob {
+    transform: translateX(var(--knob));
+  }
+
+  /* Pressing squashes the knob along the track, the way a real switch loads
+     before it moves. It is a scale on the same element, so it composes with
+     the translate rather than fighting it. */
+  .theme-switch:active .theme-switch-knob {
+    transform: scaleX(1.12);
+    transform-origin: left center;
+    transition-duration: 120ms;
+  }
+
+  .theme-switch[data-state='dark']:active .theme-switch-knob {
+    transform: translateX(var(--knob)) scaleX(1.12);
+    transform-origin: right center;
+  }
+
+  /* Two fixed slots, each the width of the knob. The icons never move; only
+     the knob does, and the icon it is under darkens to sit on the gold. */
+  .theme-switch-icon {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    width: var(--knob);
+    height: var(--knob);
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    color: color-mix(in srgb, currentColor 42%, transparent);
+    transition: color 300ms var(--ease-page);
+  }
+
+  .theme-switch[data-state='light'] .theme-switch-sun,
+  .theme-switch[data-state='dark'] .theme-switch-moon {
+    color: var(--color-bark-deep);
+  }
+
+  /* Before hydration the stored preference is unknown, so neither slot is
+     claimed and the knob has not committed to a side. */
+  .theme-switch[data-state='pending'] .theme-switch-knob {
+    opacity: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .theme-switch-knob {
+      transition-duration: 1ms;
+    }
+  }
+
+  /* ---- drag to scroll -------------------------------------------------- */
+  /* html carries scroll-behavior: smooth, which would animate every frame of
+     a drag and leave the page lagging a long way behind the pointer. It is
+     switched off for the length of the gesture and its glide, and only then.
+     An !important in an earlier layer beats one in a later layer, so this
+     cannot be undone by a utility. */
+  html.is-drag-scrolling {
+    scroll-behavior: auto !important;
+  }
+
+  /* Held only while the pointer is actually down. The hand is the only
+     affordance the gesture gets: a grab cursor sitting on every paragraph
+     would fight the text cursor that tells a reader the copy is selectable. */
+  html.is-dragging,
+  html.is-dragging * {
+    cursor: grabbing !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+  }
+
+  /* ---- masthead -------------------------------------------------------- */
+  /*
+   * The ground belongs to the header, which runs the full width of the window,
+   * and not to the row inside it, which is capped at the 75rem measure and
+   * centred. Painted on the row it gave the bar its colour down the middle of
+   * the page and left it see-through for the whole gutter either side, so on
+   * anything wider than 1200px the corners of the masthead showed the page
+   * scrolling underneath and changed colour with whichever band was passing.
+   * One ground, full bleed, no seam.
+   */
+  .masthead {
+    background-color: var(--color-paper-2);
+    transition: box-shadow 320ms var(--ease-page);
+  }
+
+  /* The brown ground, faded in over the light one rather than swapped for it,
+     so the state change is a crossfade and not a repaint. */
+  .masthead::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-color: var(--color-bark);
+    opacity: 0;
+    transition: opacity 420ms var(--ease-page);
+  }
+
+  .masthead-stuck::before {
+    opacity: 1;
+  }
+
+  /*
+   * No backdrop-filter here any more. A blur on a sticky, full width,
+   * part transparent bar is re-sampled every frame of a scroll, and the tiles
+   * it is composited from do not all arrive in the same frame: that is the
+   * torn edge along the bottom of the bar. With an opaque ground there is
+   * nothing behind it left to blur.
+   */
+  .masthead-stuck {
+    box-shadow:
+      0 1px 0 var(--color-gold),
+      0 10px 24px -18px rgba(0, 0, 0, 0.55);
+  }
+
+  /* The lockup tightens by a few pixels once the bar is stuck, so the sticky
+     state is shorter than the opening one without ever reflowing the type. */
+  .masthead-bar {
+    transition: padding 320ms var(--ease-page);
+  }
+
+  /* Reading progress. A gold hairline laid along the foot of the bar, drawn
+     with a transform so scrolling never triggers layout. */
+  .masthead-progress {
+    position: absolute;
+    inset-inline: 0;
+    bottom: -1px;
+    height: 2px;
+    transform-origin: left center;
+    background: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-gold) 55%, transparent),
+      var(--color-gold)
+    );
+    opacity: 0;
+    transition: opacity 320ms var(--ease-page);
+  }
+
+  .masthead-stuck .masthead-progress {
+    opacity: 1;
+  }
+
+  /* ---- nav ------------------------------------------------------------- */
+  /* A nav item is a word with a gold rule under it. The rule grows from the
+     centre on hover and stands full width on the current page, so the row
+     never shifts and nothing underlines mid-sentence. */
+  .nav-link {
+    position: relative;
+    display: inline-block;
+    padding-block: 0.45rem;
+    font-size: 0.9375rem;
+    line-height: 1.2;
+    color: var(--color-ink-soft);
+    text-decoration: none;
+    transition: color 200ms var(--ease-page);
+  }
+
+  .nav-link::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0.1rem;
+    height: 1px;
+    background: var(--color-gold);
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform 240ms var(--ease-page);
+  }
+
+  .nav-link:hover,
+  .nav-link:focus-visible {
+    color: var(--color-ink);
+  }
+
+  .nav-link:hover::after,
+  .nav-link:focus-visible::after {
+    transform: scaleX(1);
+  }
+
+  .nav-link[aria-current='page'] {
+    color: var(--color-ink);
+  }
+
+  .nav-link[aria-current='page']::after {
+    transform: scaleX(1);
+  }
+
+  /* Mobile panel. Items are ruled like a contents page, and each one carries
+     its folio number in the margin. */
+  .nav-panel {
+    animation: nav-panel-in 260ms var(--ease-page) both;
+  }
+
+  @keyframes nav-panel-in {
+    from {
+      opacity: 0;
+      transform: translateY(-0.5rem);
+    }
+  }
+
+  .nav-panel-item {
+    display: flex;
+    align-items: baseline;
+    gap: 0.875rem;
+    padding-block: 0.875rem;
+    font-family: var(--font-display);
+    font-size: var(--text-h4);
+    color: var(--color-ink);
+    transition: color 200ms var(--ease-page);
+  }
+
+  .nav-panel-item:hover {
+    color: var(--color-gold-ink);
+  }
+
+  /* The burger. Two rules that fold into a cross, no icon swap and no jump. */
+  .nav-toggle-bar {
+    display: block;
+    height: 1.5px;
+    width: 1.375rem;
+    background: currentColor;
+    transition:
+      transform 260ms var(--ease-page),
+      opacity 180ms var(--ease-page);
+  }
+
+  .nav-toggle-bar + .nav-toggle-bar {
+    margin-top: 0.3125rem;
+  }
+
+  .nav-toggle[aria-expanded='true'] .nav-toggle-bar:first-child {
+    transform: translateY(3.25px) rotate(45deg);
+  }
+
+  .nav-toggle[aria-expanded='true'] .nav-toggle-bar:last-child {
+    transform: translateY(-3.25px) rotate(-45deg);
+  }
+
+  /* A screen reader only utility that stays keyboard reachable. */
+  .sr-only-focusable:not(:focus):not(:focus-within) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+/* ============================================================================
+   THE OPENING SHELF
+   ----------------------------------------------------------------------------
+   A library shelf stands closed across the window with the seal stamped on it,
+   then parts down the middle: the left half slides out to the left, the right
+   half to the right, both carrying their books with them.
+
+   The two halves are NOT two shelves. Each holds a copy of the same face,
+   drawn two halves wide and pinned to that half's outer edge, so the closed
+   shelf is one continuous run of books with no join in it. The seam only
+   exists once they separate, and a gold hairline on each inner edge is what
+   the visitor reads as that seam.
+
+   The sequence, 1980ms end to end:
+        0   the mark fades up on the closed shelf
+      200   the gold rule beneath it fills
+      820   the mark fades away
+      880   the halves part, 1100ms of travel
+     1980   the veil is gone
+
+   Only transform and opacity are animated, so the open never costs a layout.
+   Under prefers-reduced-motion the whole thing is display:none and the visitor
+   lands straight on the page: freezing a curtain the way the hero rotator
+   freezes would leave a shelf standing in front of the site forever.
+   ========================================================================= */
+
+@layer components {
+  .shelf-veil {
+    /* The one exception to the site's single easing curve, and the reason is
+       physical: --ease-page leaves at full speed, which is right for a panel
+       fading in and wrong for a loaded shelf, which has to overcome its own
+       weight before it moves. This one eases in, travels, and settles. It is
+       scoped to the veil deliberately so it cannot drift into a second
+       site-wide curve. */
+    --ease-shelf: cubic-bezier(0.62, 0, 0.2, 1);
+
+    /* Changing --shelf-part-at or --shelf-part-for means changing CURTAIN_MS
+       in components/site/ShelfCurtain.tsx to match. */
+    --shelf-mark-in: 360ms;
+    --shelf-mark-out-at: 820ms;
+    --shelf-part-at: 880ms;
+    --shelf-part-for: 1100ms;
+    --shelf-total: 1980ms; /* --shelf-part-at plus --shelf-part-for */
+
+    position: fixed;
+    inset: 0;
+    z-index: 60; /* over the masthead at 40 and the lead overlays at 50 */
+    overflow: hidden;
+    /* Nothing unmounts this without JavaScript, so it stands itself down on
+       the same schedule the halves finish on. */
+    animation: shelf-dismiss 1ms linear var(--shelf-total) forwards;
+  }
+
+  /* Each half is fixed by both of its edges rather than given a width, so the
+     two always meet on the same device pixel and no sliver of page can show
+     down the middle on a fractional viewport. */
+  .shelf-panel {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    overflow: hidden;
+    will-change: transform;
+    animation-duration: var(--shelf-part-for);
+    animation-delay: var(--shelf-part-at);
+    animation-timing-function: var(--ease-shelf);
+    animation-fill-mode: both;
+  }
+
+  .shelf-panel-left {
+    left: 0;
+    right: 50%;
+    animation-name: shelf-part-left;
+  }
+
+  .shelf-panel-right {
+    left: 50%;
+    right: 0;
+    animation-name: shelf-part-right;
+  }
+
+  /* The lit edge of a moving door. It travels with its half, which is what the
+     eye expects, and it doubles as cover for the centre line. */
+  .shelf-panel::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    z-index: 2;
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      color-mix(in srgb, var(--color-gold) 55%, transparent) 8%,
+      color-mix(in srgb, var(--color-gold) 55%, transparent) 92%,
+      transparent 100%
+    );
+  }
+
+  .shelf-panel-left::after {
+    right: 0;
+  }
+
+  .shelf-panel-right::after {
+    left: 0;
+  }
+
+  /* Two halves wide, so one face spans the whole window and the copy in the
+     other half lines up with it exactly. */
+  .shelf-face {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 200%;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(180deg, #241812 0%, #1a110c 100%);
+  }
+
+  .shelf-panel-left .shelf-face {
+    left: 0;
+  }
+
+  .shelf-panel-right .shelf-face {
+    right: 0;
+  }
+
+  /* The corners fall away so the seal sits in the one lit part of the case. */
+  .shelf-face::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(
+      115% 85% at 50% 42%,
+      transparent 38%,
+      rgba(12, 7, 4, 0.62) 100%
+    );
+  }
+
+  .shelf-cornice {
+    position: relative;
+    z-index: 1;
+    flex: 0 0 auto;
+    height: clamp(0.75rem, 2.4vh, 1.25rem);
+    background: linear-gradient(180deg, #2c1d15, #191009);
+    box-shadow: inset 0 -1px 0
+      color-mix(in srgb, var(--color-gold) 26%, transparent);
+  }
+
+  .shelf-row {
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .shelf-books {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    padding-inline: 2px;
+    min-height: 0;
+    /* The shadow a compartment casts over the tops of its own books. */
+    background: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.55) 0%,
+      rgba(0, 0, 0, 0) 22%
+    );
+  }
+
+  /* Width comes from flex-grow, never from a length, so a row fills any
+     viewport exactly and keeps the proportions between its books. */
+  .shelf-spine {
+    position: relative;
+    flex-basis: 0;
+    flex-shrink: 0;
+    min-width: 0;
+    border-radius: 1px 1px 0 0;
+    /* The roundness of a spine: dark at both edges, one soft highlight left of
+       centre. Painted over the tone, which arrives as an inline style. */
+    background-image: linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.42) 0%,
+      rgba(0, 0, 0, 0.12) 16%,
+      rgba(255, 255, 255, 0.07) 38%,
+      rgba(0, 0, 0, 0.16) 72%,
+      rgba(0, 0, 0, 0.46) 100%
+    );
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.5);
+  }
+
+  /* A stamped title panel, two rules the way a spine carries them. */
+  .shelf-spine-band::before,
+  .shelf-spine-band::after {
+    content: '';
+    position: absolute;
+    inset-inline: 12%;
+    height: 1px;
+  }
+
+  .shelf-spine-band::before {
+    top: 18%;
+    background: color-mix(in srgb, var(--color-gold-light) 55%, transparent);
+  }
+
+  .shelf-spine-band::after {
+    top: 26%;
+    background: color-mix(in srgb, var(--color-gold-light) 30%, transparent);
+  }
+
+  /* Positioned, so the board's own shadow falls over the row beneath it
+     instead of being painted out by that row's ground. */
+  .shelf-board {
+    position: relative;
+    z-index: 1;
+    flex: 0 0 auto;
+    height: clamp(5px, 0.9vh, 8px);
+    background: linear-gradient(180deg, #4a3327 0%, #2c1d15 55%, #1a110c 100%);
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, var(--color-gold) 30%, transparent),
+      0 6px 12px -6px rgba(0, 0, 0, 0.75);
+  }
+
+  /* Below the medium breakpoint a row of twenty two spines reads as spaghetti,
+     because spine width scales with the viewport and shelf height does not.
+     Dropping every third one lets the rest grow into the space. */
+  @media (max-width: 47.999rem) {
+    .shelf-spine:nth-child(3n) {
+      display: none;
+    }
+  }
+
+  /* ---- the mark -------------------------------------------------------- */
+
+  .shelf-mark {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    animation:
+      shelf-mark-in var(--shelf-mark-in) var(--ease-page) both,
+      shelf-mark-out 260ms var(--ease-page) var(--shelf-mark-out-at) forwards;
+  }
+
+  .shelf-mark svg {
+    width: clamp(4rem, 13vw, 5.75rem);
+    height: auto;
+    filter: drop-shadow(0 10px 26px rgba(0, 0, 0, 0.55));
+  }
+
+  .shelf-wordmark {
+    font-size: 0.875rem;
+    letter-spacing: 0.24em;
+    color: var(--color-gold-light);
+    /* The trailing letterspace, put back on the left so the word sits centred
+       rather than a quarter of an em right of it. */
+    text-indent: 0.24em;
+  }
+
+  /* The loading cue: the same gold hairline the masthead uses for reading
+     progress, filled from the centre out. */
+  .shelf-progress {
+    width: clamp(3.5rem, 9vw, 5rem);
+    height: 1px;
+    transform: scaleX(0);
+    background: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-gold) 15%, transparent),
+      var(--color-gold),
+      color-mix(in srgb, var(--color-gold) 15%, transparent)
+    );
+    animation: shelf-progress 620ms var(--ease-shelf) 200ms forwards;
+  }
+
+  /* ---- frames ---------------------------------------------------------- */
+
+  @keyframes shelf-part-left {
+    from {
+      transform: translate3d(0, 0, 0);
+    }
+    to {
+      transform: translate3d(-100%, 0, 0);
+    }
+  }
+
+  @keyframes shelf-part-right {
+    from {
+      transform: translate3d(0, 0, 0);
+    }
+    to {
+      transform: translate3d(100%, 0, 0);
+    }
+  }
+
+  @keyframes shelf-mark-in {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 10px, 0);
+    }
+    to {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+  }
+
+  @keyframes shelf-mark-out {
+    to {
+      opacity: 0;
+      transform: translate3d(0, -8px, 0);
+    }
+  }
+
+  @keyframes shelf-progress {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+
+  @keyframes shelf-dismiss {
+    to {
+      visibility: hidden;
+      pointer-events: none;
+    }
+  }
+
+  /* The base layer zeroes every animation duration under this preference,
+     which for a curtain would mean a dark screen sitting through the delays
+     and then blinking away. So it does not open: it never appears. */
+  @media (prefers-reduced-motion: reduce) {
+    .shelf-veil {
+      display: none;
+    }
+  }
+}
+
+/* ============================================================================
+   BAND ALTERNATION
+   ----------------------------------------------------------------------------
+   Every page runs brown, light, brown, light, from its first band to its last.
+
+   Driven here rather than by a `tone` prop on each section, for one reason:
+   the tone of a home page band is set inside the component that renders it,
+   so keeping the rhythm by hand would mean editing a dozen components and
+   would break the first time a section was added, removed or reordered.
+   Position in the page decides the ground, so the rhythm cannot drift.
+
+   The odd rule re-points the ink tokens exactly as `.on-dark` does, which is
+   what lets a section written for the light ground sit on the brown one
+   unaltered: `text-ink-soft`, `bg-paper-3` and `text-gold-ink` all resolve
+   through variables. The dark-field variants above match both selectors.
+
+   Deliberately OUTSIDE @layer. Tailwind's utilities layer beats any layered
+   rule regardless of specificity, and the `tone` prop still puts a bg-* class
+   on these same elements. Unlayered CSS outranks every layer, so this wins.
+   `tone` therefore survives only as an authoring hint; position is the truth.
+   ========================================================================= */
+
+main > section:nth-of-type(odd) {
+  --color-ink: var(--color-paper);
+  --color-ink-soft: color-mix(in srgb, var(--color-paper) 76%, transparent);
+  --color-paper-2: var(--color-bark);
+  --color-paper-3: color-mix(in srgb, var(--color-gold) 26%, transparent);
+  --color-gold-ink: var(--color-gold-light);
+  --color-olive-ink: #a8be7a;
+  --color-teal: var(--color-teal-light);
+
+  background-color: var(--color-bark);
+  color: var(--color-paper);
+}
+
+main > section:nth-of-type(even) {
+  background-color: var(--color-paper-2);
+  color: var(--color-ink);
+}
+
+/* ----------------------------------------------------------------------------
+   The masthead over the first band.
+
+   Unstuck, the bar is transparent and floats over the page's opening band,
+   which under the alternation above is always the brown one. Its ink therefore
+   has to be the light set or the nav, the wordmark and the theme toggle vanish
+   into the ground behind them.
+
+   Scoped to the bar row rather than to <header>, deliberately: the mobile nav
+   panel is a sibling of this row and keeps its own light ground, so it must
+   not inherit these values. Unlayered for the same reason as the bands above.
+   -------------------------------------------------------------------------- */
+
+/* ----------------------------------------------------------------------------
+   The masthead, at rest and once scrolled.
+
+   Two states, and the whole point is the move between them:
+
+     at rest    no ground of its own, dark ink on whatever the page opens on
+     scrolled   the bark ground fills in, the ink lifts to the light stock
+
+   Every property that differs is transitioned over the same duration and the
+   one site easing curve, including the colour tokens themselves. Registering
+   the two ink tokens with @property is what makes that possible: an unregistered
+   custom property has no type, so the browser cannot interpolate it and the
+   text would snap from dark to light halfway through an otherwise smooth fade.
+
+   The ground is painted on a pseudo element rather than on the bar, so it can
+   fade its own opacity independently of the ink and neither has to wait for
+   the other.
+   -------------------------------------------------------------------------- */
+
+@property --masthead-ink {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #241812;
+}
+
+@property --masthead-ink-soft {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #4a382e;
+}
+
+.masthead-bar {
+  position: relative;
+  isolation: isolate;
+
+  /* No ground on this element. It is capped at the measure and centred, so
+     anything painted here stops short of the window edges. The ground is on
+     the full width .masthead; this row carries only the ink. */
+  --masthead-ink: var(--color-ink);
+  --masthead-ink-soft: var(--color-ink-soft);
+  --masthead-edge: var(--color-gold-ink);
+
+  color: var(--masthead-ink);
+  transition:
+    --masthead-ink 420ms var(--ease-page),
+    --masthead-ink-soft 420ms var(--ease-page),
+    color 420ms var(--ease-page),
+    padding 320ms var(--ease-page);
+}
+
+/* Scrolled: the ink lifts to the light stock as the ground fills in. */
+.masthead-stuck .masthead-bar {
+  --masthead-ink: var(--color-paper);
+  --masthead-ink-soft: color-mix(in srgb, var(--color-paper) 78%, transparent);
+  --masthead-edge: var(--color-gold-light);
+}
+
+/* The bar's own contents read from the masthead tokens rather than the page
+   ones, so they travel with it instead of jumping at the state change. */
+.masthead-bar .nav-link {
+  color: var(--masthead-ink-soft);
+  transition:
+    color 420ms var(--ease-page),
+    opacity 200ms var(--ease-page);
+}
+
+.masthead-bar .nav-link:hover,
+.masthead-bar .nav-link:focus-visible,
+.masthead-bar .nav-link[aria-current='page'] {
+  color: var(--masthead-ink);
+}
+
+.masthead-bar .marker {
+  color: var(--masthead-edge);
+  transition: color 420ms var(--ease-page);
+}
+
+.masthead-bar button {
+  color: var(--masthead-ink-soft);
+  transition: color 420ms var(--ease-page);
+}
+
+.masthead-bar button:hover {
+  color: var(--masthead-ink);
+}
+
+/* The call to action inverts with the bar: bark on the light ground, the paper
+   block as foil once the ground behind it has gone brown. */
+.masthead-bar .btn-primary {
+  transition:
+    background-color 420ms var(--ease-page),
+    color 420ms var(--ease-page),
+    box-shadow 420ms var(--ease-page);
+}
+
+.masthead-stuck .masthead-bar .btn-primary {
+  background-color: var(--color-paper);
+  color: var(--color-bark);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--color-gold) 70%, transparent);
+}
+
+.masthead-stuck .masthead-bar .btn-primary:hover {
+  background-color: var(--color-gold-light);
+  box-shadow: inset 0 0 0 2px var(--color-gold);
+}
+
+.masthead-stuck .masthead-bar :focus-visible {
+  outline-color: var(--color-gold-light);
+}
+
+/* Someone who has asked for less motion still needs the state change, just not
+   the travel: the colours swap at the same moment, without the fade. */
+@media (prefers-reduced-motion: reduce) {
+  .masthead,
+  .masthead::before,
+  .masthead-bar,
+  .masthead-bar .nav-link,
+  .masthead-bar .marker,
+  .masthead-bar button,
+  .masthead-bar .btn-primary {
+    transition-duration: 1ms;
+  }
+}

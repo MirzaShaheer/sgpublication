@@ -7,6 +7,7 @@ import { LeadProvider } from '@/components/lead/LeadProvider'
 import { LeadOverlays } from '@/components/lead/LeadOverlays'
 import { ShelfCurtain } from '@/components/site/ShelfCurtain'
 import { DragScroll } from '@/components/site/DragScroll'
+import { SiteOnly } from '@/components/site/SiteOnly'
 import { OrganizationJsonLd } from '@/components/seo/JsonLd'
 import { absoluteUrl, site, siteUrl } from '@/lib/site'
 
@@ -145,7 +146,9 @@ export default function RootLayout({
           appearing over a page the visitor has started reading, and it has to
           be outside <main> so the band alternation rules never claim it.
         */}
-        <ShelfCurtain />
+        <SiteOnly>
+          <ShelfCurtain />
+        </SiteOnly>
         {/*
           Google Tag Manager slot. Uncomment and set NEXT_PUBLIC_GTM_ID once the
           client supplies a container. lib/analytics.ts already pushes
@@ -158,11 +161,15 @@ export default function RootLayout({
         */}
         <OrganizationJsonLd />
         <LeadProvider>
-          <Header />
+          <SiteOnly>
+            <Header />
+          </SiteOnly>
           <main id="main">{children}</main>
-          <Footer />
-          <LeadOverlays />
-          <DragScroll />
+          <SiteOnly>
+            <Footer />
+            <LeadOverlays />
+            <DragScroll />
+          </SiteOnly>
         </LeadProvider>
       </body>
     </html>

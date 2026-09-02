@@ -30,7 +30,26 @@ export const SESSION_MAX_AGE_SECONDS = 7 * 24 * 60 * 60
  * simply type for themselves.
  */
 export function adminConfigured(): boolean {
-  return Boolean(process.env.ADMIN_PASSWORD && process.env.ADMIN_SESSION_SECRET)
+  return missingAdminConfig().length === 0
+}
+
+/**
+ * Which of the two are missing, by name.
+ *
+ * Named in the 503 rather than left to be guessed. A dashboard that is shut
+ * because a variable did not reach the running deployment is the single most
+ * likely thing to go wrong here, and "set these two" sends you looking at both
+ * when one of them is already right. It tells an attacker nothing the 503 did
+ * not already tell them, which is that there is nothing here to get into.
+ *
+ * An empty string counts as missing. A blank ADMIN_PASSWORD would otherwise be
+ * a password anyone could type.
+ */
+export function missingAdminConfig(): string[] {
+  const missing: string[] = []
+  if (!process.env.ADMIN_PASSWORD) missing.push('ADMIN_PASSWORD')
+  if (!process.env.ADMIN_SESSION_SECRET) missing.push('ADMIN_SESSION_SECRET')
+  return missing
 }
 
 /**

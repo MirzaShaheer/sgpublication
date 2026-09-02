@@ -1,5 +1,10 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import { ADMIN_COOKIE, adminConfigured, verifySessionToken } from '@/lib/admin-auth'
+import {
+  ADMIN_COOKIE,
+  adminConfigured,
+  missingAdminConfig,
+  verifySessionToken,
+} from '@/lib/admin-auth'
 
 /**
  * The gate in front of the dashboard.
@@ -26,8 +31,11 @@ export async function middleware(request: NextRequest) {
   // is nothing a correct password could be checked against. Better a plain
   // 503 that says so than a login form that can never succeed.
   if (!adminConfigured()) {
+    const missing = missingAdminConfig()
     return new NextResponse(
-      'The dashboard is not configured. Set ADMIN_PASSWORD and ADMIN_SESSION_SECRET.',
+      `The dashboard is not configured. Not set in this deployment: ${missing.join(
+        ' and ',
+      )}. On Vercel, a variable added after a deployment was built does not reach it: set it for the right environment, then redeploy.`,
       { status: 503, headers: { ...headers, 'content-type': 'text/plain' } },
     )
   }

@@ -44,7 +44,7 @@ export function HeroJacket({ children }: { children: ReactNode }) {
          follows that shape instead of boxing it. */
       className="drop-shadow-[0_28px_48px_rgba(0,0,0,0.45)]"
     >
-      <div className="jacket px-7 py-9 sm:px-10 sm:py-11 lg:px-12 lg:py-12">
+      <div className="jacket px-7 py-10 sm:px-12 sm:py-14 lg:px-14 lg:py-16">
         {children}
       </div>
     </BookObject>

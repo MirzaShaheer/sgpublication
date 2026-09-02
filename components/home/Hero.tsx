@@ -45,15 +45,18 @@ export function Hero() {
             has to hold display type at a readable size inside its own board
             and padding, and "finished manuscript" is the longest thing it has
             to fit; the form loses width it was not using. */}
-        <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,0.8fr)] lg:gap-x-10 xl:gap-x-20">
+        <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,0.85fr)] lg:gap-x-10 xl:gap-x-20">
           <div className="min-w-0">
             <HeroJacket>
               <RotatingHeadline
-                /* Sized to the board rather than to the window. The cap is
-                   what "finished manuscript" fits inside the narrowest
-                   column the jacket is ever set in, at lg, with its padding
-                   and spine taken off. */
-                className="text-[clamp(1.6rem,3.6vw,3.25rem)] leading-[1.06] tracking-[-0.018em]"
+                /* Sized to the board rather than to the window, and sized up
+                   from where it started: at the smaller step the title only
+                   filled the top third of the cover, which is what left the
+                   board looking stretched. The cap is what "finished
+                   manuscript", the longest word the slot cycles through,
+                   fits inside the narrowest column the jacket is ever set
+                   in, with its padding and its spine taken off. */
+                className="text-[clamp(1.4rem,5.2vw,2.5rem)] leading-[1.06] tracking-[-0.018em] lg:text-[clamp(1.6rem,3.9vw,3rem)]"
               />
 
               <hr className="rule-gold mt-7 sm:mt-8" />

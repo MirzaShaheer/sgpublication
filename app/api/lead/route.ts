@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getDb } from '@/lib/db'
+import { leadNotification } from '@/lib/lead-emails'
+import { notifyAddress, sendMail } from '@/lib/mail'
 import {
   isHoneypotFilled,
   leadFieldErrors,
@@ -11,7 +13,7 @@ import {
 /**
  * POST /api/lead
  *
- * Four deliberate behaviours, all of them about never losing a lead:
+ * Five deliberate behaviours, all of them about never losing a lead:
  *
  *   1. No DATABASE_URL means the payload is logged and the route still answers
  *      { ok: true }. Local development never needs Postgres.
@@ -21,6 +23,10 @@ import {
  *   3. A filled honeypot answers { ok: true } and writes nothing, so a bot
  *      believes it succeeded and does not come back in a different shape.
  *   4. Nothing the visitor submitted is echoed back in any response.
+ *   5. A mail failure is not a submission failure either. The notification
+ *      is attempted after the row is written, and whether it was accepted is
+ *      recorded on the row rather than reported to the visitor, so a lead
+ *      nobody was told about is visible in the dashboard instead of lost.
  */
 
 // Prisma needs the Node runtime.
@@ -101,6 +107,30 @@ function logLead(payload: LeadPayload, stored: boolean) {
   )
 }
 
+/**
+ * The notification to you. Nothing is sent to the author.
+ *
+ * Awaited rather than left running after the response. A serverless instance
+ * is free to be frozen the moment it answers, so work started and not awaited
+ * there is work that may never happen.
+ *
+ * The returned timestamp is written back to the row, so /admin can show a lead
+ * you were never told about rather than leaving it looking like any other.
+ */
+async function sendLeadMail(payload: LeadPayload, id?: string) {
+  const notifyTo = notifyAddress()
+
+  if (!notifyTo) {
+    console.warn(
+      '[lead] No LEAD_NOTIFY_TO or MAIL_FROM set, so no notification was sent for this lead.',
+    )
+    return { notifiedAt: null }
+  }
+
+  const sent = await sendMail(leadNotification({ ...payload, id }, notifyTo))
+  return { notifiedAt: sent ? new Date() : null }
+}
+
 export async function POST(request: Request) {
   if (rateLimited(clientIp(request))) {
     return NextResponse.json(
@@ -149,11 +179,25 @@ export async function POST(request: Request) {
       if (process.env.NODE_ENV === 'production') {
         console.warn('[lead] No database configured. Lead received and not stored.')
       }
+      // Still worth emailing. With no database the mail is the only record
+      // there is, which makes it the one thing that must not be skipped.
+      await sendLeadMail(payload)
       return NextResponse.json({ ok: true })
     }
 
-    await db.lead.create({ data: record })
+    const created = await db.lead.create({ data: record })
     logLead(payload, true)
+
+    const sent = await sendLeadMail(payload, created.id)
+
+    // Recording what went out is useful and not essential, so a failure here
+    // is logged and the visitor still gets an answer. The lead is already
+    // safely stored by this point, which was the part that mattered.
+    try {
+      await db.lead.update({ where: { id: created.id }, data: sent })
+    } catch (error) {
+      console.error('[lead] Could not record which emails were sent:', error)
+    }
   } catch (error) {
     // The write failed. The visitor still gets { ok: true }, because a lead
     // that reached this server should never be told it failed. We have the
@@ -166,6 +210,11 @@ export async function POST(request: Request) {
       stage: record.stage,
       source: record.source,
     })
+
+    // This is exactly when the mail matters most. The row did not survive, so
+    // the notification in your inbox is the only copy of this lead that
+    // exists, and it carries every field rather than the five logged above.
+    await sendLeadMail(payload)
   }
 
   return NextResponse.json({ ok: true })

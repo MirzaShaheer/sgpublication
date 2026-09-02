@@ -13,7 +13,15 @@ export const site = {
   // PLACEHOLDER contact details. Replace before launch.
   phone: '+1 (555) 014-8820',
   phoneHref: '+15550148820',
-  email: 'hello@sgpublication.com',
+  /*
+   * The one address, and it has to stay the one address: this is what the
+   * contact page, the closing call to action, the privacy and terms pages and
+   * the Organization JSON-LD all show, and it is also where /api/lead sends
+   * every notification, and the address those notifications are sent from.
+   * Telling visitors to write somewhere nobody reads is how an enquiry is
+   * lost, and this is the address they are asked to write to.
+   */
+  email: 'contact@sgpublication.com',
   address: {
     street: '1200 Chapter House, Suite 4',
     locality: 'Austin',

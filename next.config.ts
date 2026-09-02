@@ -8,6 +8,20 @@ const nextConfig: NextConfig = {
    * the option is dropped there and the platform is left to do it its way.
    */
   output: process.env.VERCEL ? undefined : 'standalone',
+  /**
+   * public/logo.png is read from disk by app/opengraph-image.tsx, through a
+   * path built from process.cwd(), which output file tracing cannot follow.
+   * Vercel serves public/ from its CDN rather than from the function
+   * filesystem, so without this the two card routes would render without the
+   * seal if either ever rendered at request time rather than at build.
+   *
+   * Scoped to those two routes on purpose. The file is 600KB and there is no
+   * reason for it to sit in the bundle of every other function.
+   */
+  outputFileTracingIncludes: {
+    '/opengraph-image': ['./public/logo.png'],
+    '/twitter-image': ['./public/logo.png'],
+  },
   reactStrictMode: true,
   poweredByHeader: false,
   images: {

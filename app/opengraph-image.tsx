@@ -19,10 +19,9 @@ import { site } from '@/lib/site'
  *    renders in the Noto Sans that ImageResponse ships with, and the design
  *    carries the brand instead of the typeface.
  * 3. The seal is the supplied artwork, inlined as a data URI rather than
- *    linked: satori resolves no relative URL and makes no network request. The
- *    file is read from public/ when the module loads, which holds in dev, in
- *    the build and in the container, since the Dockerfile copies public/ into
- *    the runtime image. The card also sets the name underneath the seal in
+ *    linked: satori resolves no relative URL and makes no network request. It
+ *    is read on first render rather than when the module loads, for the reason
+ *    on sealDataUri below. The card also sets the name underneath the seal in
  *    64px, which is the reading size; the wordmark inside the disc is a band
  *    of texture at 188px and is left to be exactly that.
  *
@@ -30,10 +29,43 @@ import { site } from '@/lib/site'
  * element with more than one child needs an explicit display value.
  */
 
-// Read once, when the module loads, rather than on every render.
-const SEAL = `data:image/png;base64,${readFileSync(
-  join(process.cwd(), 'public', 'logo.png'),
-).toString('base64')}`
+/**
+ * The seal as a data URI, read on first render.
+ *
+ * This was a module scope constant, and that broke every page whose metadata
+ * is resolved at request time. Next imports this module for its `alt`, `size`
+ * and `contentType` exports whenever it builds a page's metadata, so a
+ * readFileSync at module scope runs on routes that never render this card. For
+ * a prerendered page that happens at build time, where public/ is on disk. In
+ * a serverless function it happens per request, where it is not: Vercel serves
+ * public/ from its CDN and cannot trace a path built from process.cwd() into
+ * the function bundle. The throw then took out the whole metadata render, so
+ * /admin served its HTML with no metadata and React reported a Server
+ * Components error on hydration.
+ *
+ * Memoised, so it is still read once per process rather than once per render.
+ * Tolerant, so a file that cannot be read costs the card its seal instead of
+ * failing the request. next.config.ts also asks output file tracing to keep
+ * public/logo.png beside the two routes that actually draw it, so the seal is
+ * there even when one of them renders at runtime.
+ */
+let sealCache: string | null | undefined
+
+function sealDataUri(): string | null {
+  if (sealCache !== undefined) return sealCache
+  try {
+    sealCache = `data:image/png;base64,${readFileSync(
+      join(process.cwd(), 'public', 'logo.png'),
+    ).toString('base64')}`
+  } catch (error) {
+    console.error(
+      '[og] public/logo.png could not be read, so the card is drawn without the seal:',
+      error,
+    )
+    sealCache = null
+  }
+  return sealCache
+}
 
 export const alt =
   'Selune Global Publication. Book publishing for first time authors, from idea to launch.'
@@ -46,6 +78,8 @@ const { bark: BARK, gold: GOLD, goldLight: GOLD_LIGHT, paper: PAPER } =
   sealColors
 
 export default function OpengraphImage() {
+  const seal = sealDataUri()
+
   return new ImageResponse(
     (
       <div
@@ -86,7 +120,7 @@ export default function OpengraphImage() {
 
         {/* --- the seal ---------------------------------------------------
             The artwork itself, at the size the SVG redraw used to occupy. */}
-        <img src={SEAL} width={188} height={188} alt="" />
+        {seal ? <img src={seal} width={188} height={188} alt="" /> : null}
 
         {/* --- wordmark --------------------------------------------------- */}
         <div

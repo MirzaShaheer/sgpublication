@@ -1,4 +1,9 @@
-import type { LeadRecord } from '@/lib/lead-schema'
+import type {
+  AuthorStageValue,
+  LeadRecord,
+  LeadSourceValue,
+  LeadStatusValue,
+} from '@/lib/lead-schema'
 
 /**
  * The database handle, or null.
@@ -13,14 +18,55 @@ import type { LeadRecord } from '@/lib/lead-schema'
  * which is exactly what fails when `prisma generate` has not been run.
  */
 
+/** A `Lead` row as Postgres returns it: absent values are null, not undefined. */
+export type LeadRow = {
+  id: string
+  createdAt: Date
+  name: string | null
+  email: string
+  phone: string | null
+  country: string | null
+  stage: AuthorStageValue
+  genre: string | null
+  wordCount: number | null
+  budget: string | null
+  message: string | null
+  source: LeadSourceValue
+  path: string | null
+  referrer: string | null
+  userAgent: string | null
+  status: LeadStatusValue
+  notes: string | null
+  notifiedAt: Date | null
+}
+
 /**
- * The one query the site makes, typed structurally rather than from the
- * generated client, so this file compiles whether or not that client exists.
- * The real PrismaClient satisfies this shape.
+ * Only the queries the site actually makes, typed structurally rather than
+ * from the generated client, so this file compiles whether or not that client
+ * exists. The real PrismaClient satisfies this shape.
+ *
+ * `where` and `orderBy` are deliberately loose. Narrowing them properly would
+ * mean restating a slice of Prisma's generated types by hand, which is a lot
+ * of surface to keep in step with the schema for no safety we do not already
+ * get from the row type and from every caller living in this repository.
  */
+export type LeadWhere = Record<string, unknown>
+
 export type Db = {
   lead: {
     create(args: { data: LeadRecord }): Promise<{ id: string }>
+    update(args: {
+      where: { id: string }
+      data: Partial<Pick<LeadRow, 'status' | 'notes' | 'notifiedAt'>>
+    }): Promise<{ id: string }>
+    findUnique(args: { where: { id: string } }): Promise<LeadRow | null>
+    findMany(args: {
+      where?: LeadWhere
+      orderBy?: Record<string, 'asc' | 'desc'>
+      take?: number
+      skip?: number
+    }): Promise<LeadRow[]>
+    count(args?: { where?: LeadWhere }): Promise<number>
   }
 }
 

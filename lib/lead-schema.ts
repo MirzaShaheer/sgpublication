@@ -15,6 +15,21 @@ import { z } from 'zod'
 export const leadSources = ['modal', 'exit', 'inline', 'contact'] as const
 export type LeadSourceValue = (typeof leadSources)[number]
 
+/**
+ * Where a lead has got to in your own follow up, spelled exactly as the
+ * Prisma `LeadStatus` enum. This is the one part of a lead a visitor never
+ * touches: every submission is written as `new` and only /admin moves it.
+ */
+export const leadStatuses = ['new', 'contacted', 'won', 'lost'] as const
+export type LeadStatusValue = (typeof leadStatuses)[number]
+
+export const statusLabels: Record<LeadStatusValue, string> = {
+  new: 'New',
+  contacted: 'Contacted',
+  won: 'Signed',
+  lost: 'Closed',
+}
+
 export const authorStages = [
   'idea',
   'writing',

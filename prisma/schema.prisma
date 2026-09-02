@@ -8,7 +8,16 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  // The pooled connection, used by every query the running site makes.
+  url       = env("DATABASE_URL")
+  // The direct connection, used only by prisma migrate and introspect.
+  // Migrations issue DDL and take advisory locks, neither of which survives a
+  // transaction mode pooler such as Neon's PgBouncer, so they must bypass it.
+  //
+  // Named for what Vercel's Neon integration creates, so the two line up with
+  // no variable to copy across by hand. Unset is fine: Prisma falls back to
+  // url, which is what a plain non pooled Postgres wants.
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 enum LeadSource {
@@ -16,6 +25,15 @@ enum LeadSource {
   exit
   inline
   contact
+}
+
+/// Where a lead has got to in your own follow up. Set from the dashboard,
+/// never from a form: every submission arrives as `new`.
+enum LeadStatus {
+  new
+  contacted
+  won
+  lost
 }
 
 enum AuthorStage {
@@ -47,6 +65,16 @@ model Lead {
   referrer  String?
   userAgent String?
 
+  // Your own working state, edited from /admin and never from a form.
+  status     LeadStatus @default(new)
+  notes      String?
+
+  // When the notification to you went out, or null if it did not. The
+  // dashboard shows this so a lead you were never told about is visible rather
+  // than silently sitting there, and can be sent again by hand.
+  notifiedAt DateTime?
+
   @@index([createdAt])
   @@index([email])
+  @@index([status])
 }

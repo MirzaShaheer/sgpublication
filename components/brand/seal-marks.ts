@@ -8,9 +8,9 @@
  *
  * This file used to carry the seal as vector geometry as well, because the
  * image routes drew the mark themselves. None of them do now: the Open Graph
- * card inlines the artwork from public/logo-mark.png, and the Apple touch icon
- * and the three favicons are that same artwork resized. The mark is the
- * supplied file everywhere it appears.
+ * card inlines the artwork from public/logo.png, and the Apple touch icon and
+ * the three favicons are that same artwork resized. The mark is the supplied
+ * file everywhere it appears.
  */
 export const sealColors = {
   bark: '#3E2A20',

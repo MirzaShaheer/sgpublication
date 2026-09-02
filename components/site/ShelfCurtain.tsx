@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Seal } from '@/components/brand/Seal'
 import { markRevealed } from '@/lib/reveal'
-import { site } from '@/lib/site'
 
 /**
  * The opening shelf.
@@ -263,14 +262,15 @@ export function ShelfCurtain() {
       </div>
 
       <div className="shelf-mark">
-        {/* The intrinsic width matches the top of the clamp in .shelf-mark img,
-            so next/image serves that width and its retina double and nothing
-            is ever upscaled. wordmark={false} is explicit: past 128px the
-            component would otherwise switch to the artwork carrying the name,
-            and the name is already set below it. priority because this is the
-            first thing on screen and must not wait on lazy loading. */}
-        <Seal size={176} wordmark={false} priority />
-        <span className="shelf-wordmark marker">{site.name}</span>
+        {/* The mark, at the one size on the site where its wordmark is
+            genuinely legible, and with nothing set beneath it: the artwork
+            carries the name itself here.
+
+            The intrinsic width matches the top of the clamp in .shelf-mark
+            img, so next/image serves that width and its retina double and
+            nothing is ever upscaled. priority because this is the first thing
+            on screen and must not wait on lazy loading. */}
+        <Seal size={272} priority />
         <span className="shelf-progress" />
       </div>
     </div>

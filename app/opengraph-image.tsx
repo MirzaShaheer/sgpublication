@@ -22,8 +22,9 @@ import { site } from '@/lib/site'
  *    linked: satori resolves no relative URL and makes no network request. The
  *    file is read from public/ when the module loads, which holds in dev, in
  *    the build and in the container, since the Dockerfile copies public/ into
- *    the runtime image. It is the wordmark-less copy, because the card sets
- *    the name underneath it in 64px and the seal need not say it twice.
+ *    the runtime image. The card also sets the name underneath the seal in
+ *    64px, which is the reading size; the wordmark inside the disc is a band
+ *    of texture at 188px and is left to be exactly that.
  *
  * ImageResponse supports a subset of CSS: flexbox only, no grid, and any
  * element with more than one child needs an explicit display value.
@@ -31,7 +32,7 @@ import { site } from '@/lib/site'
 
 // Read once, when the module loads, rather than on every render.
 const SEAL = `data:image/png;base64,${readFileSync(
-  join(process.cwd(), 'public', 'logo-mark.png'),
+  join(process.cwd(), 'public', 'logo.png'),
 ).toString('base64')}`
 
 export const alt =

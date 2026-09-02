@@ -1451,21 +1451,14 @@
      a full screen of shelf, so it is sized to be read: a little under a fifth
      of the window, and never smaller than 7rem on a phone. */
   .shelf-mark img {
-    width: clamp(7rem, 18vw, 11rem);
+    /* Larger than a seal is set anywhere else, because this one carries the
+       wordmark and the wordmark is what decides the floor: below about 11rem
+       the name stops being letters. Nothing else is on the screen to crowd. */
+    width: clamp(11.5rem, 26vw, 17rem);
     height: auto;
     filter: drop-shadow(0 14px 34px rgba(0, 0, 0, 0.6));
   }
 
-  .shelf-wordmark {
-    /* Set against the mark above it, so it grows with the window by the same
-       proportion rather than staying at one size under a seal that moves. */
-    font-size: clamp(0.875rem, 1.5vw, 1.0625rem);
-    letter-spacing: 0.24em;
-    color: var(--color-gold-light);
-    /* The trailing letterspace, put back on the left so the word sits centred
-       rather than a quarter of an em right of it. */
-    text-indent: 0.24em;
-  }
 
   /* The loading cue: the same gold hairline the masthead uses for reading
      progress, filled from the centre out. */

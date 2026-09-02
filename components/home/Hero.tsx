@@ -1,5 +1,5 @@
-import { HeroBook } from '@/components/home/HeroBook'
 import { HeroContactForm } from '@/components/home/HeroContactForm'
+import { HeroJacket } from '@/components/home/HeroJacket'
 import { RotatingHeadline } from '@/components/home/RotatingHeadline'
 import { ButtonLink } from '@/components/ui/Button'
 import { Container, Section } from '@/components/ui/Section'
@@ -8,20 +8,23 @@ import { heroCopy } from '@/content/hero'
 /**
  * The first three seconds of the site.
  *
- * The headline opens the page. The seal used to sit above it, and it is gone:
- * the masthead already carries the same seal a few pixels higher, so the
- * second one said nothing new and pushed the sentence a hundred and twenty
- * pixels down the screen for the privilege. The headline names where the
- * visitor is starting from, then two sentences say what is handled, then one
- * button and one quiet link. No form at the top of the page: asking for an
- * email address before explaining anything is how the scams look.
+ * The headline is printed on a book cover. It used to sit as plain type at the
+ * top of the band with a drawn hardback below it carrying an invented title,
+ * which meant the first screen said the same thing twice and ran about four
+ * hundred pixels longer for it. One object now: the sentence the visitor came
+ * to read, set as the cover of the book they are here to make, with the blurb
+ * under it and the imprint at the foot the way a jacket is laid out.
  *
- * The right column is the short contact form. It used to be the book, and the
- * book is now under the copy in the left column: the first screen is where a
- * visitor decides whether to talk to us, and an illustration in the one place
- * the eye lands after the headline was spending that space on decoration. The
- * book still does its job, a step lower, where it illustrates the sentence it
- * belongs to rather than standing in for an ask.
+ * What the cover carries and what it does not. Title, rule, blurb, imprint -
+ * everything a jacket prints. The two calls to action sit under the board,
+ * because a button on a cover is neither: it is not printing, and a visitor
+ * would not know whether they were being shown an object or offered a control.
+ *
+ * The right column is the short contact form. No form above the fold used to
+ * be the rule here; it is one now because the whole first screen is the offer,
+ * and asking is what the screen is for. The three notes beneath the jacket are
+ * what the leader lines on the old illustration said, kept because they name
+ * the work and are the only place on this screen that does.
  *
  * The band closes on a quiet line of trust text above a rule, which becomes
  * the fold edge of the page.
@@ -29,30 +32,62 @@ import { heroCopy } from '@/content/hero'
 
 export function Hero() {
   /* The top padding exists to clear the sticky masthead, which floats
-     transparently over this band, and to do nothing else. The bar is about
-     72px tall, so this leaves a little over a line of air above the headline
-     and no more: with the seal gone there is nothing here that wants a deep
-     opening margin, and the page should start where it looks like it starts. */
+     transparently over this band, and to do nothing else. */
   return (
     <Section
       tone="paper"
       size="lg"
       labelledBy="hero-heading"
-      className="pt-[5.5rem] lg:pt-24"
+      className="pt-[5.5rem] lg:pt-20"
     >
       <Container>
-        {/* items-start, not items-center: the left column is now taller than
-            the form beside it, and centring would float the form halfway down
-            the band with its head nowhere near the headline it answers. */}
-        <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.85fr)] lg:gap-x-10 xl:grid-cols-[minmax(0,1.25fr)_minmax(0,0.9fr)] xl:gap-x-20">
+        {/* The left column takes more of the row than it used to. The jacket
+            has to hold display type at a readable size inside its own board
+            and padding, and "finished manuscript" is the longest thing it has
+            to fit; the form loses width it was not using. */}
+        <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,0.8fr)] lg:gap-x-10 xl:gap-x-20">
           <div className="min-w-0">
-            <RotatingHeadline />
+            <HeroJacket>
+              <RotatingHeadline
+                /* Sized to the board rather than to the window. The cap is
+                   what "finished manuscript" fits inside the narrowest
+                   column the jacket is ever set in, at lg, with its padding
+                   and spine taken off. */
+                className="text-[clamp(1.6rem,3.6vw,3.25rem)] leading-[1.06] tracking-[-0.018em]"
+              />
 
-            <p className="measure-wide mt-7 text-lead text-ink-soft">
-              {heroCopy.body}
-            </p>
+              <hr className="rule-gold mt-7 sm:mt-8" />
 
-            <div className="mt-9 flex flex-wrap items-center gap-x-8 gap-y-5">
+              <p className="mt-6 max-w-[46ch] text-body text-ink-soft">
+                {heroCopy.body}
+              </p>
+
+              {/* The imprint, stamped at the foot of the board where a jacket
+                  names its publisher. */}
+              <p className="marker mt-7 text-gold-ink sm:mt-8">
+                {heroCopy.imprintLine}
+              </p>
+            </HeroJacket>
+
+            {/* What the leader lines used to say, now a line of notes under
+                the object they pointed at. Each keeps its gold dot, which is
+                what is left of the mark that anchored it to the drawing. */}
+            <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 font-display text-fine italic text-ink-soft">
+              {heroCopy.annotations.map((annotation) => (
+                <li
+                  key={annotation.target}
+                  className="flex items-center gap-2.5"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="h-1 w-1 shrink-0 rounded-full bg-gold"
+                  />
+                  {annotation.label}
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-5">
               <ButtonLink
                 href={heroCopy.primaryCta.href}
                 variant="primary"
@@ -64,24 +99,9 @@ export function Hero() {
                 {heroCopy.secondaryCta.label}
               </ButtonLink>
             </div>
-
-            {/* The book, under the lines it illustrates. Held to a modest
-                width: it is a supporting drawing here, not the thing the
-                column is built around, and at full width it would push the
-                form on the right badly out of line. */}
-            <div className="mt-11 max-w-[26rem] lg:mt-12">
-              <HeroBook />
-            </div>
           </div>
 
-          {/* The panel is nudged down so its top rule lands on the cap height
-              of the headline rather than on the top of the headline's line
-              box. items-start aligns the two boxes, but the h1 carries half a
-              line of leading above its capitals, so aligned boxes read as a
-              panel sitting a little high. The offset is roughly that leading
-              at each breakpoint, and it only applies where the two columns
-              are actually side by side. */}
-          <div className="min-w-0 lg:mt-3 xl:mt-3.5">
+          <div className="min-w-0">
             <HeroContactForm />
           </div>
         </div>
@@ -89,9 +109,6 @@ export function Hero() {
         <p className="measure-wide mt-10 text-fine text-ink-soft sm:mt-12">
           {heroCopy.trustLine}
         </p>
-        {/* The imprint line: who the house belongs to, stamped small at the
-            foot of the first screen where a title page would put it. */}
-        <p className="marker mt-4 text-gold-ink">{heroCopy.imprintLine}</p>
         <hr className="rule-quiet mt-5" />
       </Container>
     </Section>

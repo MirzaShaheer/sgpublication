@@ -62,15 +62,15 @@ export const metadata: Metadata = {
 }
 
 /**
- * The browser chrome follows the ground the page actually opens on, which is
- * paper-2 in the light theme and the deep stock in the dark one. These are the
- * two --color-paper-2 values from globals.css and must be changed with them.
+ * The browser chrome matches the ground the page actually opens on, which is
+ * now always the light stock: the site no longer follows the operating system
+ * on a first visit, so keying this to prefers-color-scheme would paint the
+ * chrome dark around a light page for every visitor whose machine is in dark
+ * mode. It is one value, and ThemeToggle rewrites it if the visitor chooses
+ * dark. #EFE6D6 is --color-paper-2 from globals.css and moves with it.
  */
 export const viewport: Viewport = {
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#EFE6D6' },
-    { media: '(prefers-color-scheme: dark)', color: '#2A1C14' },
-  ],
+  themeColor: '#EFE6D6',
   colorScheme: 'light dark',
 }
 
@@ -92,15 +92,21 @@ export default function RootLayout({
         {/*
           Theme, resolved before first paint.
 
-          This has to be a blocking inline script in the head. Anything later,
-          including an effect in a client component, runs after the first paint
-          and shows a white flash to every dark mode visitor on every
-          navigation. It is three lines, it sets one attribute, and it fails
-          closed to the light theme if storage is unavailable.
+          The site opens light for everyone. Dark is a choice a visitor makes
+          here, not a setting inherited from their operating system: this is a
+          publishing house on warm uncoated stock, and the light theme is the
+          designed article rather than one of two equal options. So the only
+          thing this reads is an explicit stored choice.
+
+          It still has to be a blocking inline script in the head. Anything
+          later, including an effect in a client component, runs after the
+          first paint and would show a light flash to every visitor who HAS
+          chosen dark, on every navigation. Two lines, one attribute, and it
+          fails closed to light if storage is unavailable.
         */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var s=localStorage.getItem('sg_theme');var d=s==='dark'||(!s&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light'}catch(e){document.documentElement.dataset.theme='light'}})()`,
+            __html: `(function(){try{var s=localStorage.getItem('sg_theme');document.documentElement.dataset.theme=s==='dark'?'dark':'light'}catch(e){document.documentElement.dataset.theme='light'}})()`,
           }}
         />
 

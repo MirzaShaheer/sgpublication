@@ -127,9 +127,10 @@
    * thing that reads on both.
    *
    * Driven by data-theme on <html>, written before first paint by the inline
-   * script in app/layout.tsx, so there is no flash of the light theme. The
-   * "system" setting resolves to light or dark in that script rather than
-   * here, which keeps one source of truth for what is currently showing.
+   * script in app/layout.tsx, so there is no flash of the light theme. There
+   * is deliberately no prefers-color-scheme block here: the site opens light
+   * for everyone and dark is an explicit choice, so one attribute is the only
+   * source of truth for what is currently showing.
    */
   :root[data-theme='dark'] {
     color-scheme: dark;
@@ -248,6 +249,27 @@
   :is(.on-dark, main > section:nth-of-type(odd)) :focus-visible,
   :is(.on-dark, main > section:nth-of-type(odd)):focus-visible {
     outline-color: var(--color-gold-light);
+  }
+
+  /*
+   * Focus that was moved rather than taken does not get a ring.
+   *
+   * tabindex="-1" is never in the tab order, so nothing here can be reached by
+   * Tab and nothing is being hidden from a keyboard user. These elements are
+   * focused by script for one reason: when a step changes or a panel opens,
+   * focus has to land on the new matter so a screen reader reads it out. They
+   * are containers and headings, not controls.
+   *
+   * Without this the step one wrapper of the lead popup drew a 2px gold
+   * rectangle around the whole stage question, which reads as a stray box
+   * somebody forgot to delete. The ring belongs on the thing you are about to
+   * operate, and a group is not one of those. Real controls inside these
+   * containers keep their own rings, because this selector only matches the
+   * container itself.
+   */
+  [tabindex='-1']:focus,
+  [tabindex='-1']:focus-visible {
+    outline: none;
   }
 
   ::selection {
@@ -435,6 +457,58 @@
 
     background-color: var(--color-bark);
     color: var(--color-paper);
+  }
+
+  /* ---- the jacket ------------------------------------------------------ */
+  /*
+   * The printed surface: the front board of a cased book, used by the hero,
+   * where the headline is set as the cover of the book the visitor is here to
+   * make.
+   *
+   * Dark cloth, foil stamped. It was tried as a cream board first and the book
+   * disappeared: the block of page edges along the head is cream, so on a
+   * cream board it merged into the cover and the one detail that says "this is
+   * an object with pages in it" was gone. Against brown cloth those edges read
+   * immediately, which is why every cased book with a light block looks like a
+   * book from across a room.
+   *
+   * The values are literals rather than the page tokens, and that is the point
+   * of this class. Everything else on the site repaints when the band changes
+   * or the visitor chooses the dark theme; a jacket does not. It is an object
+   * sitting on the page, printed once, and an object does not change colour
+   * when the lights in the room change - the same reason the seal keeps its
+   * gold on both grounds. The four ink values are the .on-dark set, resolved.
+   */
+  .jacket {
+    --color-ink: #f2e9da;
+    --color-ink-soft: #c4b5a3;
+    --color-paper-3: rgba(201, 151, 63, 0.26);
+    --color-gold-ink: #e5be72;
+
+    position: relative;
+    color: var(--color-ink);
+    /* Cloth, lit from the upper left, so the board has a surface rather than
+       a flat fill, and a shade warmer than the band it sits on so the object
+       separates from its ground. The angle matches the light sweep BookObject
+       lays over the cover, so the two read as one light source. */
+    background-image: linear-gradient(
+      154deg,
+      #4c3527 0%,
+      #3a271d 46%,
+      #241811 100%
+    );
+  }
+
+  /* The blind rule stamped inside the board edge, the way a case is ruled in
+     from the trim. Drawn on the element rather than as a child so nothing in
+     the cover content has to know it is there. */
+  .jacket::after {
+    content: '';
+    position: absolute;
+    inset: 0.625rem;
+    border: 1px solid color-mix(in srgb, var(--color-gold) 52%, transparent);
+    border-radius: 2px; /* a printed rule follows the trim, not a UI corner */
+    pointer-events: none;
   }
 
   /* ---- buttons --------------------------------------------------------- */
@@ -1371,14 +1445,21 @@
       shelf-mark-out 260ms var(--ease-page) var(--shelf-mark-out-at) forwards;
   }
 
-  .shelf-mark svg {
-    width: clamp(4rem, 13vw, 5.75rem);
+  /* The seal is an <img> now, not the drawn svg it was when this rule was
+     written, so the old selector stopped matching and the mark was stranded at
+     whatever intrinsic width the component asked for. It is the only thing on
+     a full screen of shelf, so it is sized to be read: a little under a fifth
+     of the window, and never smaller than 7rem on a phone. */
+  .shelf-mark img {
+    width: clamp(7rem, 18vw, 11rem);
     height: auto;
-    filter: drop-shadow(0 10px 26px rgba(0, 0, 0, 0.55));
+    filter: drop-shadow(0 14px 34px rgba(0, 0, 0, 0.6));
   }
 
   .shelf-wordmark {
-    font-size: 0.875rem;
+    /* Set against the mark above it, so it grows with the window by the same
+       proportion rather than staying at one size under a seal that moves. */
+    font-size: clamp(0.875rem, 1.5vw, 1.0625rem);
     letter-spacing: 0.24em;
     color: var(--color-gold-light);
     /* The trailing letterspace, put back on the left so the word sits centred

@@ -205,7 +205,12 @@ export function Header() {
         <div className="col-start-3 flex items-center justify-end gap-2">
           <ThemeToggle />
 
-          <ButtonLink href={contactHref} className="hidden sm:inline-flex">
+          <ButtonLink
+            href={contactHref}
+            /* Never two lines: at the narrow end of the desktop range the row
+               is tight enough that this wrapped into "Book a free / call". */
+            className="hidden whitespace-nowrap sm:inline-flex"
+          >
             Book a free call
           </ButtonLink>
 

@@ -83,7 +83,8 @@ export function StageChooser({
               <span
                 aria-hidden="true"
                 className={[
-                  'mt-[0.3rem] block h-3.5 w-3.5 shrink-0 rounded-[3px] border transition-colors duration-200',
+                  'block h-3.5 w-3.5 shrink-0 rounded-[3px] border transition-colors duration-200',
+                  compact ? 'mt-[0.28rem]' : 'mt-[0.3rem]',
                   chosen ? 'border-gold-ink bg-gold-ink' : 'border-gold',
                 ].join(' ')}
               />
@@ -91,9 +92,11 @@ export function StageChooser({
                 <span className="block font-display text-h4 text-ink">
                   {option.label}
                 </span>
-                <span className="mt-1 block text-fine text-ink-soft">
-                  {option.hint}
-                </span>
+                {compact ? null : (
+                  <span className="mt-1 block text-fine text-ink-soft">
+                    {option.hint}
+                  </span>
+                )}
               </span>
             </button>
           </li>

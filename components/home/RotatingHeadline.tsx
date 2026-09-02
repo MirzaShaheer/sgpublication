@@ -123,7 +123,17 @@ function stateFor(index: number, active: number, previous: number): SlotState {
   return 'idle'
 }
 
-export function RotatingHeadline() {
+/**
+ * `className` sizes the headline for where it is set. The default is the
+ * full page opening; the hero passes a smaller step because inside the jacket
+ * the line has a board and its padding to fit within, and the longest word,
+ * "finished manuscript", is what decides that.
+ */
+export function RotatingHeadline({
+  className = 'text-h2 sm:text-hero',
+}: {
+  className?: string
+} = {}) {
   // One piece of state, so the outgoing and incoming words always agree.
   const [slot, setSlot] = useState({ index: 0, previous: -1 })
   const headingRef = useRef<HTMLHeadingElement>(null)
@@ -193,7 +203,7 @@ export function RotatingHeadline() {
   const sentence = `${heroCopy.lineOne} ${heroWords[0]} ${heroCopy.lineThree}`
 
   return (
-    <h1 id="hero-heading" ref={headingRef} className="text-h2 sm:text-hero">
+    <h1 id="hero-heading" ref={headingRef} className={className}>
       <span className="sr-only">{sentence}</span>
       <span aria-hidden="true" className="block">
         <span className="block">{heroCopy.lineOne}</span>

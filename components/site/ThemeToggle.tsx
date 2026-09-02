@@ -11,10 +11,11 @@ import { useEffect, useState } from 'react'
  * change but never where they currently were; this reads at a glance without
  * a label, because the state is the position of the knob.
  *
- * Three states exist underneath: light, dark, and system. The control moves
- * between the two explicit ones, and "system" is only ever the starting state
- * of a visitor who has not chosen. Once someone presses this, their choice
- * wins over the operating system on this device until they change it.
+ * Two states, not three. The site opens light for everyone and dark is a
+ * choice made here, so there is no "system" setting to fall back to and the
+ * operating system's own preference is deliberately not consulted. A visitor
+ * whose machine is in dark mode still lands on the warm stock the site was
+ * designed on, and stays there until they press this.
  *
  * The applied theme is written to <html data-theme> by the inline script in
  * app/layout.tsx before first paint, so the page never flashes the wrong
@@ -47,30 +48,21 @@ export function ThemeToggle() {
     setMounted(true)
   }, [])
 
-  /* Someone on the system setting who changes it at the OS level should see
-     the site follow, right up until they press this control themselves. */
-  useEffect(() => {
-    const media = window.matchMedia('(prefers-color-scheme: dark)')
-    const onChange = () => {
-      let stored: string | null = null
-      try {
-        stored = window.localStorage.getItem(STORAGE_KEY)
-      } catch {
-        // Blocked storage: treat as no explicit choice.
-      }
-      if (stored === 'light' || stored === 'dark') return
-      const next: Theme = media.matches ? 'dark' : 'light'
-      document.documentElement.dataset.theme = next
-      setTheme(next)
-    }
-    media.addEventListener('change', onChange)
-    return () => media.removeEventListener('change', onChange)
-  }, [])
+  /* There is no listener on prefers-color-scheme any more. It existed to let
+     a visitor who had not chosen follow their operating system; now that the
+     site opens light regardless, following the OS mid-session would move the
+     ground under someone who never asked for it. */
 
   const toggle = () => {
     const next: Theme = currentTheme() === 'dark' ? 'light' : 'dark'
     document.documentElement.dataset.theme = next
     setTheme(next)
+    /* The browser chrome is declared light in app/layout.tsx, because that is
+       what the site opens on. Someone who chooses dark would otherwise get a
+       cream address bar wrapped around a dark page, so the meta tag moves with
+       the choice. Both values are the --color-paper-2 pair from globals.css. */
+    const meta = document.querySelector('meta[name="theme-color"]')
+    if (meta) meta.setAttribute('content', next === 'dark' ? '#2A1C14' : '#EFE6D6')
     try {
       window.localStorage.setItem(STORAGE_KEY, next)
     } catch {

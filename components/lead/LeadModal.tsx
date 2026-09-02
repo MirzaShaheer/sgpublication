@@ -111,10 +111,10 @@ export function LeadModal({
         <div
           className={[
             'shrink-0 px-8 sm:px-11',
-            pitching ? 'pt-8 sm:pt-9' : 'pt-7',
+            pitching ? 'pt-7 sm:pt-8' : 'pt-6',
           ].join(' ')}
         >
-          {pitching ? <Seal size={44} /> : null}
+          {pitching ? <Seal size={40} /> : null}
 
           {/* Two lines and a seal while the offer is still being made; one
               line and nothing else once it has been taken. pr-14 is the
@@ -124,7 +124,7 @@ export function LeadModal({
             id={titleId}
             className={
               pitching
-                ? 'mt-5 max-w-[24ch] pr-14 text-h3'
+                ? 'mt-4 max-w-[24ch] pr-14 text-h3'
                 : 'pr-14 text-h4'
             }
           >
@@ -147,7 +147,7 @@ export function LeadModal({
         <hr
           className={[
             'mx-8 shrink-0 sm:mx-11',
-            pitching ? 'rule-quiet mt-6' : 'rule-gold mt-5',
+            pitching ? 'rule-quiet mt-5' : 'rule-gold mt-5',
           ].join(' ')}
         />
 

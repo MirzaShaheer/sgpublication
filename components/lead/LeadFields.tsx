@@ -41,7 +41,7 @@ import { contactHref, site } from '@/lib/site'
 
 export const leadOffer = {
   heading: 'Read the roadmap before you pay anyone',
-  lede: 'Twenty pages as a PDF: what each stage of publishing costs, how long it takes, what an ISBN and a distributor actually do, and the four questions to ask before you sign anything. A free thirty minute call with one of our editors comes with it.',
+  lede: 'Twenty pages on what publishing costs, how long it takes, and what to ask before you sign anything. A free thirty minute call comes with it.',
   stageQuestion: 'Where is your book right now?',
   detailsHeading: 'Where should we send it?',
   successHeading: 'It is on its way',
@@ -878,7 +878,7 @@ export function LeadCaptureForm({
      -------------------------------------------------------------------- */
   const shellClass = panel ? 'flex min-h-0 flex-1 flex-col' : ''
   const bodyClass = panel
-    ? 'min-h-0 flex-1 overflow-y-auto overscroll-contain px-8 py-5 sm:px-11'
+    ? 'min-h-0 flex-1 overflow-y-auto overscroll-contain px-8 py-4 sm:px-11'
     : ''
   const footClass = panel
     ? 'shrink-0 border-t border-paper-3 px-8 py-4 sm:px-11'

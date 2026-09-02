@@ -263,7 +263,13 @@ export function ShelfCurtain() {
       </div>
 
       <div className="shelf-mark">
-        <Seal size={92} />
+        {/* The intrinsic width matches the top of the clamp in .shelf-mark img,
+            so next/image serves that width and its retina double and nothing
+            is ever upscaled. wordmark={false} is explicit: past 128px the
+            component would otherwise switch to the artwork carrying the name,
+            and the name is already set below it. priority because this is the
+            first thing on screen and must not wait on lazy loading. */}
+        <Seal size={176} wordmark={false} priority />
         <span className="shelf-wordmark marker">{site.name}</span>
         <span className="shelf-progress" />
       </div>

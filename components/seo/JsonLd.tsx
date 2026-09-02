@@ -57,6 +57,10 @@ export function OrganizationJsonLd() {
         url: siteUrl,
         description: site.description,
         foundingDate: site.founded,
+        parentOrganization: {
+          '@type': 'Organization',
+          name: site.parent,
+        },
         logo: {
           '@type': 'ImageObject',
           url: absoluteUrl('/logo.png'),

@@ -89,6 +89,9 @@ export function Hero() {
         <p className="measure-wide mt-10 text-fine text-ink-soft sm:mt-12">
           {heroCopy.trustLine}
         </p>
+        {/* The imprint line: who the house belongs to, stamped small at the
+            foot of the first screen where a title page would put it. */}
+        <p className="marker mt-4 text-gold-ink">{heroCopy.imprintLine}</p>
         <hr className="rule-quiet mt-5" />
       </Container>
     </Section>

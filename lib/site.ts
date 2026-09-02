@@ -1,6 +1,12 @@
 export const site = {
   name: 'SG Publication',
   legalName: 'SG Publication LLC',
+  /**
+   * The parent company. SG Publication is its book publishing division, and
+   * the SG in the name is short for it, which is also why the seal's own
+   * wordmark reads Selune Global Publication while the site says SG.
+   */
+  parent: 'Selune Global',
   tagline: 'We turn your idea into a book people buy.',
   description:
     'A full service book publishing house. We take first time authors from a raw idea to a finished book that is edited, designed, published, marketed and managed.',

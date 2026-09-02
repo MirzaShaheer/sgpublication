@@ -32,6 +32,14 @@ export const heroCopy = {
   secondaryCta: { label: 'See how it works', href: '/how-it-works' },
   trustLine:
     'More than four hundred authors published since 2016. The first call is free, and nothing is charged until the plan is in writing.',
+  /**
+   * The imprint line, the way a title page names the house behind the house.
+   * It closes the first screen rather than sitting above the headline: the
+   * marker role is explicitly not an eyebrow over every heading, and the top
+   * of this page is for the visitor's own starting point, not for our
+   * corporate structure.
+   */
+  imprintLine: 'The book publishing division of Selune Global',
   annotations: [
     { target: 'cover', label: 'We design the cover' },
     { target: 'spine', label: 'We set the interior and the spine' },

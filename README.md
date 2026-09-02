@@ -22,15 +22,41 @@ Copy `.env.example` to `.env` if you want to change anything:
 | `DATABASE_URL` | no | Postgres connection string. Leads are written to the `Lead` table when present, logged to the console when absent. |
 | `NEXT_PUBLIC_SITE_URL` | no | Canonical origin used for absolute URLs in metadata, sitemap, structured data and OG images. Defaults to `https://sgpublication.com`. |
 | `NEXT_PUBLIC_GTM_ID` | no | Google Tag Manager container id. The `<GoogleTagManager>` slot in `app/layout.tsx` is commented out until one is supplied. `lib/analytics.ts` pushes `lead_submit` events into `window.dataLayer` and is safe without GTM. |
+| `ADMIN_PASSWORD` | for `/admin` | The password for the lead dashboard. With this or the secret unset, `/admin` serves a 503 and there is no way in. |
+| `ADMIN_SESSION_SECRET` | for `/admin` | Signs the session cookie. Changing it signs every session out, which is how a session is revoked. |
+| `RESEND_API_KEY` | no | Resend key, starting `re_`. Absent, every send is skipped with a logged warning and the forms are otherwise unaffected. |
+| `MAIL_FROM` | no | The from address, which must be on a domain verified in Resend. Defaults to `SG Publication <contact@sgpublication.com>`. |
+| `LEAD_NOTIFY_TO` | no | Where new enquiries are emailed. Defaults to `MAIL_FROM`. |
 
 ### With a database
 
 ```bash
 # set DATABASE_URL in .env first
-npx prisma migrate dev --name init
+npx prisma migrate deploy
 ```
 
+The initial migration is committed in `prisma/migrations/`, so this applies it rather than creating one. Use `npx prisma migrate dev --name <what-changed>` only when you have changed `schema.prisma` and need a new migration.
+
 `npm run build` runs `prisma generate` before `next build`. Generation needs the schema only, never a live connection, so the build succeeds with no database.
+
+#### Pooling, which matters on Vercel and not on a container
+
+The datasource takes two URLs:
+
+| Variable | Used by | Which host |
+| --- | --- | --- |
+| `DATABASE_URL` | every query the running site makes | the **pooled** host, the one with `-pooler` in it |
+| `DATABASE_URL_UNPOOLED` | `prisma migrate` and `prisma db pull` only | the same database **without** `-pooler` |
+
+Vercel runs each request in its own short lived instance, so a busy minute opens far more connections than a free tier database allows. The pooled string fixes that, and Prisma has to be told it is talking to a transaction mode pooler or it prepares statements the pooler cannot hold onto:
+
+```
+?sslmode=require&pgbouncer=true&connection_limit=1
+```
+
+Migrations must bypass the pooler, because they issue DDL and take advisory locks and neither survives transaction mode. That is what `DATABASE_URL_UNPOOLED` is for. Leave it unset against a plain non pooled Postgres, such as a local one or a container with its own database, and Prisma falls back to `DATABASE_URL`.
+
+**Both URLs want a `connect_timeout`,** and on Neon's free tier the unpooled one needs a generous one. Neon suspends the compute after a few minutes idle, and the first connection has to wait for it to wake. Without the timeout, `prisma migrate deploy` fails with `P1001: Can't reach database server`, which reads like a wrong host or a firewall and is neither. `connect_timeout=30` on the direct URL and `connect_timeout=15` on the pooled one is enough.
 
 ---
 
@@ -55,7 +81,14 @@ Also supported, and nothing needs configuring: **Root Directory** is the reposit
 
 The one thing that differs is `output`. `next.config.ts` asks for `standalone`, which is what the Dockerfile needs and what Vercel does not want, so the option is dropped when `VERCEL` is set in the build environment. Both paths are verified: a plain `next build` emits `.next/standalone`, and `VERCEL=1 next build` does not.
 
-No environment variable is needed to build. `DATABASE_URL` is read only at request time by `/api/lead`, so a deployment without it serves every page and fails only on a form submission. Set `NEXT_PUBLIC_SITE_URL` to the live origin, or canonical URLs and the sitemap will point at the default in `lib/site.ts`.
+No environment variable is needed to build. `DATABASE_URL` is read only at request time, so a deployment without it serves every page and stores nothing. Set `NEXT_PUBLIC_SITE_URL` to the live origin, or canonical URLs and the sitemap will point at the default in `lib/site.ts`.
+
+**Vercel has no database of its own,** so Postgres comes from somewhere else. Neon's free tier needs no card and is what Vercel's own Postgres integration runs on; Supabase works the same way. Add it from the Vercel dashboard under **Storage**, or sign up directly and paste the connection string in. Read the pooling note above before you paste: on Vercel it has to be the pooled host with `pgbouncer=true&connection_limit=1`, and `DATABASE_URL_UNPOOLED` has to be the unpooled one or `prisma migrate deploy` will hang or fail on the advisory lock.
+
+**Two caveats specific to serverless,** neither of which applies to the container:
+
+- **The rate limits are per instance.** The five submissions a minute in `/api/lead` and the five failed sign ins in `app/admin/actions.ts` both count in a `Map` in memory. Vercel gives each instance its own memory, so the real ceiling is five times however many instances are warm. They still blunt one noisy client, which is what they were for, but they are not a defence. A shared store such as Upstash Redis is what makes them mean anything.
+- **Middleware runs on the Edge runtime,** which has no `node:crypto`. That is why `lib/admin-auth.ts` signs the session cookie with Web Crypto: the same code has to run in middleware and in the server components, and only Web Crypto exists in both.
 
 **If the domain returns Vercel's `404: NOT_FOUND`,** the deployment is missing rather than broken, and it is worth checking in this order: that the Deployments tab shows a build for the latest commit on `main` at all; that the project's Production Branch is `main` and not `master`, since pushes to a non production branch only ever build previews; that Root Directory is the repository root and not `app`; and that the domain is attached to this project rather than an older one.
 
@@ -194,13 +227,51 @@ Every successful submission pushes a `lead_submit` event with its source into `w
 
 ### The API route
 
-`POST /api/lead` validates with Zod, then writes to the `Lead` table through Prisma. Three deliberate behaviours:
+`POST /api/lead` validates with Zod, writes to the `Lead` table through Prisma, then emails you. Five deliberate behaviours:
 
 - **No database, no problem.** Missing `DATABASE_URL` means the payload is logged and the route still answers `{ ok: true }`.
 - **A failed write still answers `{ ok: true }`.** A lead that reached the server is never told it failed. The error is logged instead.
-- **A filled honeypot answers `{ ok: true }` and writes nothing,** so a bot believes it succeeded.
+- **A filled honeypot answers `{ ok: true }` and writes nothing,** so a bot believes it succeeded. No email is sent for one either.
+- **Nothing the visitor submitted is echoed back** in any response.
+- **A mail failure is not a submission failure.** Whether the notification was accepted is recorded on the row, not reported to the visitor, so a lead you were never told about is visible in the dashboard rather than lost. When the write itself fails, the email is still sent: it is then the only copy of that lead there is.
 
 There is a light in memory rate limit per IP. It is per instance only; a deployment running several instances wants a shared store.
+
+### The dashboard
+
+Every capture point on the site posts to the one `/api/lead` endpoint and becomes one `Lead` row, so there is nothing wired per form. `/admin` is where those rows are read.
+
+| Route | What it is |
+| --- | --- |
+| `/admin` | Every enquiry, newest first. Filter by status and by which form it came from, search name, email or phone, page at fifty a time. |
+| `/admin/leads/[id]` | One enquiry in full, with the status buttons, a private notes box and a control to send yourself the notification again. |
+| `/admin/export` | The current view as a CSV, honouring the same filters as the table. |
+| `/admin/login` | The password. |
+
+Access is one password and one signed cookie: no user table, no third party, no dependency. Four things about how it is built are deliberate.
+
+- **It fails closed.** Everywhere else a missing environment variable degrades to something that still works, because losing a lead is worse than a warning. Here the opposite holds: with `ADMIN_PASSWORD` or `ADMIN_SESSION_SECRET` unset, `middleware.ts` serves a 503 to every `/admin` route including the login page. Getting that backwards would make every enquiry the site has ever taken readable by anyone who guessed the URL.
+- **The gate runs before the page does.** `middleware.ts` turns an unauthorised visitor away before a single lead is read out of the database, rather than rendering a page that then decides to hide itself. `/admin/export` checks the session again for itself, because that one response is the entire lead list in a single file and should not depend on a matcher pattern being right.
+- **The cookie carries its own expiry, signed.** A cookie's `Max-Age` is a request for the browser's cooperation; the HMAC over the expiry is not. A copied cookie replayed after seven days does not work whatever the client claims about its age. Signing uses Web Crypto rather than `node:crypto` so the identical code runs in middleware, which is an Edge runtime, and in the server components.
+- **The pages are server rendered, and there is no delete.** Rows become HTML before the response leaves, so a table of real people's phone numbers never exists as JSON in a production response. And a lead is the record of someone who asked for help: marking one closed says what deleting it would, and can be undone.
+
+  One caveat on that first claim, because it is easy to check and be alarmed by: **`next dev` does ship the rows as JSON.** React's development build records the resolved value of every awaited server promise, the `Promise.all` in `app/admin/page.tsx` among them, and puts it in the flight payload for the DevTools timeline. So in development the payload carries every column including `userAgent` and `notes`. It is stripped from a production build: the same page goes from 116KB to 51KB and greps clean for `\"phone\":`, `userAgent` and `Promise.all`. Worth knowing before reading anything into a `view-source` on localhost.
+
+The marketing masthead, footer, shelf curtain and lead overlays opt out of `/admin` in `components/site/SiteOnly.tsx`, since the exit intent popup firing while you read an enquiry would be a small absurdity. It uses `usePathname`, which resolves during server rendering too, so none of that chrome is in the `/admin` HTML rather than appearing and then vanishing. The marketing pages stay statically prerendered.
+
+### The notification email
+
+One email per enquiry, to you, built in `lib/lead-emails.ts` and sent through `lib/mail.ts`. It carries every field, a link to that lead in the dashboard, and `Reply-To` set to the author, so hitting reply in your mail client answers the author rather than this mailbox. That one header is the difference between a notification you act on and one you copy an address out of.
+
+**Nothing is ever sent to the author.** The on page confirmation is what tells them the form worked, and answering an enquiry is a thing a person does by hand. There is no code path, in the route or in the dashboard, that writes to any address but your own.
+
+Resend is called over its REST API with plain `fetch` rather than through its SDK. One authenticated POST does not justify a fifth dependency in a project that runs on four, and a missing dependency is one more thing that can break a build the way a missing Prisma client can.
+
+The send is awaited before the response, not left running after it: a serverless instance is free to be frozen the moment it answers, so work started and not awaited there may never happen. Whether Resend accepted it is written to `notifiedAt` on the row, which is what lets `/admin` show a lead that arrived while the mail was misconfigured, and lets you send it to yourself again.
+
+Every value from the visitor is escaped before it reaches the HTML body, and the message carries a plain text part, both because a name is not markup and because a message with no text part is scored as spam. Subjects are stripped of line breaks: a subject is built from a name typed into a public form, and a name containing a carriage return is how header injection is attempted.
+
+**Deliverability is the part that is not code.** Sending as `contact@sgpublication.com` needs SPF and DKIM records for `sgpublication.com`, added in Resend's domain settings, and ideally DMARC. Without them the notification lands in your own spam folder. None of it touches the MX records, so wherever the `contact@` mailbox is hosted keeps working exactly as it does now.
 
 ### SEO
 
@@ -230,7 +301,8 @@ app/
   layout.tsx              fonts, metadata, LeadProvider, GTM slot
   page.tsx                the home page, sections 1 to 10
   globals.css             every design token, the rule primitives
-  api/lead/route.ts       the single lead endpoint
+  api/lead/route.ts       the single lead endpoint, and the notification
+  admin/                  the lead dashboard: list, one lead, CSV export, login
   services/page.tsx       the services index: what each one includes, and a quote form
   services/[slug]/        seven service pages
   blog/[slug]/            three posts
@@ -238,14 +310,20 @@ app/
 components/
   brand/                  Seal, BookObject, GeneratedCover
   ui/                     Container, Section, SectionHeading, Button, ServiceIcon
-  site/                   Header, Footer, DragScroll
+  site/                   Header, Footer, DragScroll, SiteOnly
   home/                   the ten home page sections
   services/               ServiceBlocks, the long form block renderer
   lead/                   provider, modal, mobile bar, exit intent, forms, QuoteForm
   seo/                    JSON-LD components
 content/                  all copy, as typed data
 lib/                      site config, analytics, db, lead schema
+  mail.ts                 sending through Resend, or skipping and logging
+  lead-emails.ts          the notification email to you
+  admin-auth.ts           password check and cookie signing, Edge safe
+  admin-session.ts        reading that cookie in a server component
+middleware.ts             the gate in front of /admin
 prisma/schema.prisma      the Lead model
+prisma/migrations/        the initial migration
 ```
 
 ---

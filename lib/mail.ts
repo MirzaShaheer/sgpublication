@@ -16,6 +16,8 @@
  * That is the same degradation lib/db.ts makes for the database.
  */
 
+import { site } from '@/lib/site'
+
 const RESEND_ENDPOINT = 'https://api.resend.com/emails'
 
 /**
@@ -24,12 +26,25 @@ const RESEND_ENDPOINT = 'https://api.resend.com/emails'
  * it can be changed without touching this file.
  */
 function fromAddress(): string {
-  return process.env.MAIL_FROM || 'SG Publication <contact@sgpublication.com>'
+  return process.env.MAIL_FROM || `${site.name} <${site.email}>`
 }
 
-/** Where lead notifications go. Your inbox, not the author's. */
-export function notifyAddress(): string | null {
-  return process.env.LEAD_NOTIFY_TO || process.env.MAIL_FROM || null
+/**
+ * Where lead notifications go. Your inbox, not the author's.
+ *
+ * This is site.email, the one address the contact page, the footer and the
+ * JSON-LD already show, because an enquiry should arrive at the mailbox
+ * visitors are told to write to. lib/site.ts is the single place it changes.
+ *
+ * A real default rather than a fallback to MAIL_FROM: MAIL_FROM is a from
+ * address, constrained by which domain Resend has verified, and it is not
+ * necessarily a mailbox anybody reads. Set LEAD_NOTIFY_TO to send the
+ * notifications somewhere else without touching either file.
+ */
+export const DEFAULT_NOTIFY_TO = site.email
+
+export function notifyAddress(): string {
+  return process.env.LEAD_NOTIFY_TO?.trim() || DEFAULT_NOTIFY_TO
 }
 
 /**

@@ -118,16 +118,7 @@ function logLead(payload: LeadPayload, stored: boolean) {
  * you were never told about rather than leaving it looking like any other.
  */
 async function sendLeadMail(payload: LeadPayload, id?: string) {
-  const notifyTo = notifyAddress()
-
-  if (!notifyTo) {
-    console.warn(
-      '[lead] No LEAD_NOTIFY_TO or MAIL_FROM set, so no notification was sent for this lead.',
-    )
-    return { notifiedAt: null }
-  }
-
-  const sent = await sendMail(leadNotification({ ...payload, id }, notifyTo))
+  const sent = await sendMail(leadNotification({ ...payload, id }, notifyAddress()))
   return { notifiedAt: sent ? new Date() : null }
 }
 

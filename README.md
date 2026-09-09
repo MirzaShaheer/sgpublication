@@ -26,7 +26,7 @@ Copy `.env.example` to `.env` if you want to change anything:
 | `ADMIN_SESSION_SECRET` | for `/admin` | Signs the session cookie. Changing it signs every session out, which is how a session is revoked. |
 | `RESEND_API_KEY` | no | Resend key, starting `re_`. Absent, every send is skipped with a logged warning and the forms are otherwise unaffected. |
 | `MAIL_FROM` | no | The from address, which must be on a domain verified in Resend. Defaults to `SG Publication <contact@sgpublication.com>`. |
-| `LEAD_NOTIFY_TO` | no | Where new enquiries are emailed. Defaults to `MAIL_FROM`. |
+| `LEAD_NOTIFY_TO` | no | Where new enquiries are emailed. Defaults to `site.email` in `lib/site.ts`, currently `contact@sgpublication.com`. A recipient needs no verification, so this is free to sit on any domain. |
 
 ### With a database
 
@@ -271,7 +271,13 @@ The send is awaited before the response, not left running after it: a serverless
 
 Every value from the visitor is escaped before it reaches the HTML body, and the message carries a plain text part, both because a name is not markup and because a message with no text part is scored as spam. Subjects are stripped of line breaks: a subject is built from a name typed into a public form, and a name containing a carriage return is how header injection is attempted.
 
+Every form on the site — the hero form, the pop up, the exit intent panel, the in page forms, the quote form and the contact page — posts to this one route, so all six produce the same alert. There is no second submit path to keep in step.
+
+The alert goes to `site.email` unless `LEAD_NOTIFY_TO` says otherwise — the same address the contact page, the footer and the JSON-LD show, so an enquiry arrives at the mailbox visitors are told to write to. `DEFAULT_NOTIFY_TO` in `lib/mail.ts` reads it from `lib/site.ts` rather than falling back to `MAIL_FROM`, because `MAIL_FROM` is chosen by which domain Resend has verified and is not necessarily a mailbox anybody reads.
+
 **Deliverability is the part that is not code.** Sending as `contact@sgpublication.com` needs SPF and DKIM records for `sgpublication.com`, added in Resend's domain settings, and ideally DMARC. Without them the notification lands in your own spam folder. None of it touches the MX records, so wherever the `contact@` mailbox is hosted keeps working exactly as it does now.
+
+Sending and receiving are two different problems, and Resend only solves the first. Verifying the domain lets the site send **as** `contact@sgpublication.com`; it does not create that mailbox. Receiving there needs MX records pointing at a mailbox host, and until one exists the notification is sent and then bounces. Point `LEAD_NOTIFY_TO` at an address you can already read if you want alerts before that is sorted out.
 
 ### SEO
 

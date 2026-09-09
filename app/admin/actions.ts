@@ -205,13 +205,12 @@ export async function resendLeadMail(formData: FormData) {
   const db = await getDb()
   if (!db) throw new Error('No database is configured.')
 
-  const notifyTo = notifyAddress()
-  if (!notifyTo) throw new Error('No LEAD_NOTIFY_TO or MAIL_FROM is set.')
-
   const lead = await db.lead.findUnique({ where: { id } })
   if (!lead) throw new Error('That lead no longer exists.')
 
-  const sent = await sendMail(leadNotification({ ...rowAsPayload(lead), id }, notifyTo))
+  const sent = await sendMail(
+    leadNotification({ ...rowAsPayload(lead), id }, notifyAddress()),
+  )
   if (sent) await db.lead.update({ where: { id }, data: { notifiedAt: new Date() } })
 
   revalidatePath(`/admin/leads/${id}`)

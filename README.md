@@ -24,7 +24,11 @@ Copy `.env.example` to `.env` if you want to change anything:
 | `NEXT_PUBLIC_GTM_ID` | no | Google Tag Manager container id. The `<GoogleTagManager>` slot in `app/layout.tsx` is commented out until one is supplied. `lib/analytics.ts` pushes `lead_submit` events into `window.dataLayer` and is safe without GTM. |
 | `ADMIN_PASSWORD` | for `/admin` | The password for the lead dashboard. With this or the secret unset, `/admin` serves a 503 and there is no way in. |
 | `ADMIN_SESSION_SECRET` | for `/admin` | Signs the session cookie. Changing it signs every session out, which is how a session is revoked. |
-| `RESEND_API_KEY` | no | Resend key, starting `re_`. Absent, every send is skipped with a logged warning and the forms are otherwise unaffected. |
+| `SMTP_HOST` | no | SMTP server, e.g. `smtp.gmail.com`. Set it with `SMTP_USER` and `SMTP_PASS` and SMTP is used in preference to Resend. |
+| `SMTP_PORT` | no | Defaults to `587` (STARTTLS, mandatory). `465` is treated as implicit TLS. |
+| `SMTP_USER` | no | The mailbox to sign in as, usually the full address. |
+| `SMTP_PASS` | no | An **app password**, not the account password. Gmail and Zoho both reject the account one. |
+| `RESEND_API_KEY` | no | Resend key, starting `re_`. Used only when SMTP is not configured. Absent too, every send is skipped with a logged warning and the forms are otherwise unaffected. |
 | `MAIL_FROM` | no | The from address, which must be on a domain verified in Resend. Defaults to `SG Publication <contact@sgpublication.com>`. |
 | `LEAD_NOTIFY_TO` | no | Where new enquiries are emailed. Defaults to `site.email` in `lib/site.ts`, currently `contact@sgpublication.com`. A recipient needs no verification, so this is free to sit on any domain. |
 
@@ -265,7 +269,13 @@ One email per enquiry, to you, built in `lib/lead-emails.ts` and sent through `l
 
 **Nothing is ever sent to the author.** The on page confirmation is what tells them the form worked, and answering an enquiry is a thing a person does by hand. There is no code path, in the route or in the dashboard, that writes to any address but your own.
 
-Resend is called over its REST API with plain `fetch` rather than through its SDK. One authenticated POST does not justify a fifth dependency in a project that runs on four, and a missing dependency is one more thing that can break a build the way a missing Prisma client can.
+There are two transports, and `sendMail` picks SMTP whenever `SMTP_HOST`, `SMTP_USER` and `SMTP_PASS` are all set, falling back to Resend when only `RESEND_API_KEY` is.
+
+**SMTP** signs in to a mailbox you own and sends as itself. Nothing passes through a third party's API, no domain has to be verified, and the mail arrives in an inbox you already read. It is the right default for one notification per enquiry. The connection is pooled at a single socket and cached per instance, because the TLS handshake and auth cost more than the message does; a failed send drops the transport so the next attempt rebuilds it, rather than inheriting a dead pooled connection forever.
+
+**Resend** posts over HTTPS instead, which is what you want on a host that blocks outbound port 587, and which requires the sending domain to be verified first. It is called over its REST API with plain `fetch` rather than through its SDK: one authenticated POST does not justify a dependency, and a missing dependency is one more thing that can break a build the way a missing Prisma client can. SMTP does get `nodemailer`, because SMTP is a stateful conversation over a socket with TLS upgrades and auth negotiation in it, and hand rolling that is how you get a mail path that works until a provider changes a greeting.
+
+Either way a failure is logged and never surfaced to the visitor, and `SMTP_PASS` is expected to be an app password rather than an account password, so it can be revoked on its own.
 
 The send is awaited before the response, not left running after it: a serverless instance is free to be frozen the moment it answers, so work started and not awaited there may never happen. Whether Resend accepted it is written to `notifiedAt` on the row, which is what lets `/admin` show a lead that arrived while the mail was misconfigured, and lets you send it to yourself again.
 
